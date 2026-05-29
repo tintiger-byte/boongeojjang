@@ -203,16 +203,9 @@ function selectIngredient(element, ingredientType) {
 }
 
 /**
- * 선택된 속재료 정보를 간직한 채 다음 화면(음료 선택)으로 이동
+ * 현재 선택된 도우와 속재료 조합을 장바구니에 자동으로 저장 (중복 시 수량 증가)
  */
-function goToBeverages() {
-    navigateTo('scr-beverages');
-}
-
-/**
- * 선택된 도우와 속재료를 장바구니에 추가하고 장바구니 화면으로 이동
- */
-function addToCartAndNavigate() {
+function saveCurrentBungeoToCart() {
     const doughKey = selectedDoughType || 'plain';
     const ingredientKey = selectedIngredientType || 'custard';
 
@@ -241,7 +234,21 @@ function addToCartAndNavigate() {
             image: doughInfo.img
         });
     }
+}
 
+/**
+ * 선택된 속재료 정보를 간직한 채 다음 화면(음료 선택)으로 이동하면서 붕어빵을 장바구니에 자동 저장
+ */
+function goToBeverages() {
+    saveCurrentBungeoToCart();
+    navigateTo('scr-beverages');
+}
+
+/**
+ * 선택된 도우와 속재료를 장바구니에 저장하고 즉시 장바구니 화면으로 바로 이동
+ */
+function addToCartAndNavigate() {
+    saveCurrentBungeoToCart();
     navigateTo('scr-cart');
 }
 
