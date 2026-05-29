@@ -483,24 +483,6 @@ async function requestTossPayment() {
     // 토스페이먼츠 객체 초기화 (V2 표준)
     const clientKey = 'test_ck_vZnjEJeQVxPeEkJ25KyDVPmOoBN0';
     
-    // 모바일 결제창(휴대폰용) 레이아웃을 강제하기 위해 User-Agent를 iPhone으로 임시 위장
-    const originalUserAgent = navigator.userAgent;
-    const originalPlatform = navigator.platform;
-    try {
-        Object.defineProperty(navigator, 'userAgent', {
-            get: function () {
-                return 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1';
-            },
-            configurable: true
-        });
-        Object.defineProperty(navigator, 'platform', {
-            get: function () { return 'iPhone'; },
-            configurable: true
-        });
-    } catch (e) {
-        console.warn('User-Agent 위장 실패:', e);
-    }
-
     const tosspayments = TossPayments(clientKey);
     
     // 결제창 결제 인스턴스 생성
@@ -550,20 +532,6 @@ async function requestTossPayment() {
     } catch (error) {
         console.error('결제 요청 중 오류가 발생했습니다:', error);
         alert('결제 창을 여는 도중 오류가 발생했습니다: ' + error.message);
-    } finally {
-        // 원래 User-Agent 및 플랫폼 정보로 즉각 복구
-        try {
-            Object.defineProperty(navigator, 'userAgent', {
-                get: function () { return originalUserAgent; },
-                configurable: true
-            });
-            Object.defineProperty(navigator, 'platform', {
-                get: function () { return originalPlatform; },
-                configurable: true
-            });
-        } catch (e) {
-            console.warn('User-Agent 복원 실패:', e);
-        }
     }
 }
 
