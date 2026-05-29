@@ -750,3 +750,38 @@ body {
     color: #FFF !important;
     box-shadow: 0 4px 12px rgba(211, 142, 50, 0.2) !important;
 }
+
+/* 꼬마 붕어 헤엄치기 애니메이션 */
+@keyframes swim-left-to-right {
+    0% {
+        left: -50px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        left: 100%;
+        opacity: 0;
+    }
+}
+
+@keyframes swim-right-to-left {
+    0% {
+        right: -50px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        right: 100%;
+        opacity: 0;
+    }
+}

@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // UI 정보 동기화
     updateSettingsUI();
+
+    // 꼬마 붕어 헤엄치기 애니메이션 가동
+    initSwimmingBungeos();
     
     // URL에서 screen 파라미터가 있는지 확인
     const urlParams = new URLSearchParams(window.location.search);
@@ -111,6 +114,67 @@ document.addEventListener('DOMContentLoaded', () => {
         navigateTo(targetScreen);
     }
 });
+
+/**
+ * 인트로 화면의 꼬마 붕어들이 백그라운드에서 헤엄쳐 다니도록 제어하는 마이크로 인터랙션
+ */
+function initSwimmingBungeos() {
+    const container = document.querySelector('.intro-graphic');
+    if (!container) return;
+
+    // 주기적으로 꼬마 붕어 생성
+    setInterval(() => {
+        // 인트로 화면이 활성화 상태일 때만 생성하여 백그라운드 리소스 소모 원천 차단
+        const introScreen = document.getElementById('scr-intro');
+        if (!introScreen || !introScreen.classList.contains('active')) return;
+
+        // 동시 헤엄 수량 조절 (동시 최대 4마리까지 대기)
+        if (container.querySelectorAll('.swimming-baby-bungeo').length >= 4) return;
+
+        const baby = document.createElement('img');
+        baby.className = 'swimming-baby-bungeo';
+        baby.src = 'top_fish.png';
+        
+        // 자연스러운 아쿠아리움 연출을 위한 랜덤 속성 부여
+        const size = Math.floor(Math.random() * 12) + 20; // 20px ~ 32px
+        const topPos = Math.floor(Math.random() * 65) + 15; // 15% ~ 80%
+        const duration = Math.random() * 3 + 4.5; // 4.5s ~ 7.5s (부드럽고 적당한 스피드)
+        const direction = Math.random() > 0.5 ? 'ltr' : 'rtl'; // ltr: Left to Right, rtl: Right to Left
+        
+        baby.style.position = 'absolute';
+        baby.style.width = `${size}px`;
+        baby.style.height = 'auto';
+        baby.style.top = `${topPos}%`;
+        baby.style.zIndex = '2';
+        baby.style.pointerEvents = 'none';
+        baby.style.opacity = '0';
+        baby.style.transition = 'opacity 0.6s';
+        
+        if (direction === 'ltr') {
+            // 왼쪽에서 오른쪽으로 헤엄 (원래 왼쪽을 보고 있는 붕어 이미지를 가로 반전하여 머리가 헤엄 방향을 향하도록 설정)
+            baby.style.transform = 'scaleX(-1)';
+            baby.style.animation = `swim-left-to-right ${duration}s linear forwards`;
+        } else {
+            // 오른쪽에서 왼쪽으로 헤엄 (원래 왼쪽 방향 유지)
+            baby.style.transform = 'scaleX(1)';
+            baby.style.animation = `swim-right-to-left ${duration}s linear forwards`;
+        }
+        
+        container.appendChild(baby);
+        
+        // 마운트 후 부드러운 투명도 등장 페이드 인 처리
+        setTimeout(() => {
+            baby.style.opacity = '0.55';
+        }, 50);
+        
+        // 애니메이션 끝나면 소멸
+        setTimeout(() => {
+            baby.remove();
+        }, duration * 1000);
+
+    }, 2500); // 2.5초 간격으로 새로운 붕어 자연스럽게 스폰
+}
+
 
 // 도우(빵) 선택 상태 관리 변수 (기본값: null)
 let selectedDoughType = null;
