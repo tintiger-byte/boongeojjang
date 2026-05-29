@@ -712,8 +712,8 @@ function handleLogin() {
     // 관리자 특수 로그인 처리 (010-0000-0000 또는 admin, 비밀번호 000000)
     if ((phoneInput === 'admin' || phoneInput === '010-0000-0000') && pwInput === '000000') {
         currentUserRole = 'admin';
-        currentUserName = '최고관리자';
-        currentUserPhone = '010-0000-0000';
+        currentUserName = '붕어대장';
+        currentUserPhone = '최고관리자';
         alert('🔑 관리자 권한으로 로그인하였습니다.\n설정(우측 상단 톱니바퀴) 메뉴에서 [관리자 콘솔]에 진입할 수 있습니다!');
         
         // UI 동기화
@@ -839,8 +839,8 @@ function secretAdminTap() {
     if (logoTapCount === 5) {
         logoTapCount = 0;
         currentUserRole = 'admin';
-        currentUserName = '최고관리자';
-        currentUserPhone = '010-0000-0000';
+        currentUserName = '붕어대장';
+        currentUserPhone = '최고관리자';
         alert('🔑 [Secret Bypass] 로고를 5회 터치하여 최고관리자(Admin) 권한으로 자동 마스터 로그인하였습니다!');
         updateSettingsUI();
         renderAdminUsers();
