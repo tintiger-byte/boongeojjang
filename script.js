@@ -32,6 +32,23 @@ function navigateTo(screenId) {
         if (screenId === 'scr-cart') {
             renderCart();
         }
+
+        // 빵 종류 선택 화면 진입 시 이전 선택 상태 초기화 (디폴트 없앰)
+        if (screenId === 'scr-dough') {
+            selectedDoughType = null;
+            selectedIngredientType = null;
+
+            // UI상의 selected 클래스 모두 제거
+            document.querySelectorAll('#scr-dough .menu-card').forEach(card => card.classList.remove('selected'));
+            document.querySelectorAll('#scr-ingredients .menu-card').forEach(card => card.classList.remove('selected'));
+
+            // 버튼 텍스트 원상 복구
+            const btnIngredients = document.getElementById('btn-next-ingredients');
+            if (btnIngredients) btnIngredients.textContent = '속재료 선택하기';
+
+            const btnBeverages = document.getElementById('btn-next-beverages');
+            if (btnBeverages) btnBeverages.textContent = '음료 선택하기';
+        }
     }
 
     // 3. 하단 네비게이션 동기화 처리
@@ -95,8 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// 도우(빵) 선택 상태 관리 변수 (기본값: 'plain')
-let selectedDoughType = 'plain';
+// 도우(빵) 선택 상태 관리 변수 (기본값: null)
+let selectedDoughType = null;
 
 // 실시간 장바구니 리스트 상태 관리 변수
 let cart = [];
@@ -155,14 +172,18 @@ function selectDough(element, doughType) {
 }
 
 /**
- * 선택된 도우 정보를 간직한 채 다음 화면(속재료 선택)으로 이동
+ * 선택된 도우 정보를 간직한 채 다음 화면(속재료 선택)으로 이동 (도우 선택 필수 검증)
  */
 function goToIngredients() {
+    if (!selectedDoughType) {
+        showCustomToast('먼저 붕어빵 도우(빵 종류)를 선택해 주세요!', 'info');
+        return;
+    }
     navigateTo('scr-ingredients');
 }
 
-// 속재료 선택 상태 관리 변수 (기본값: 'custard')
-let selectedIngredientType = 'custard';
+// 속재료 선택 상태 관리 변수 (기본값: null)
+let selectedIngredientType = null;
 
 /**
  * 속재료를 선택하는 함수
@@ -237,17 +258,25 @@ function saveCurrentBungeoToCart() {
 }
 
 /**
- * 선택된 속재료 정보를 간직한 채 다음 화면(음료 선택)으로 이동하면서 붕어빵을 장바구니에 자동 저장
+ * 선택된 속재료 정보를 간직한 채 다음 화면(음료 선택)으로 이동하면서 붕어빵을 장바구니에 자동 저장 (속재료 검증 추가)
  */
 function goToBeverages() {
+    if (!selectedIngredientType) {
+        showCustomToast('먼저 붕어빵 속재료를 선택해 주세요!', 'info');
+        return;
+    }
     saveCurrentBungeoToCart();
     navigateTo('scr-beverages');
 }
 
 /**
- * 선택된 도우와 속재료를 장바구니에 저장하고 즉시 장바구니 화면으로 바로 이동
+ * 선택된 도우와 속재료를 장바구니에 저장하고 즉시 장바구니 화면으로 바로 이동 (속재료 검증 추가)
  */
 function addToCartAndNavigate() {
+    if (!selectedIngredientType) {
+        showCustomToast('먼저 붕어빵 속재료를 선택해 주세요!', 'info');
+        return;
+    }
     saveCurrentBungeoToCart();
     navigateTo('scr-cart');
 }
@@ -701,6 +730,63 @@ function showReviewToast() {
         }, 3000);
     }
 }
+
+/**
+ * 프리미엄 디자인 커스텀 토스트 알림 표시 함수
+ */
+function showCustomToast(message, iconName = 'info') {
+    const existingToast = document.querySelector('.custom-toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    toast.innerHTML = `
+        <span class="material-icons-round" style="color: #FFB300; font-size: 20px;">${iconName}</span>
+        <span style="font-size: 13.5px; font-weight: 700;">${message}</span>
+    `;
+    
+    // 스타일 지정
+    toast.style.position = 'absolute';
+    toast.style.bottom = '95px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%) translateY(20px)';
+    toast.style.backgroundColor = 'rgba(74, 43, 32, 0.98)';
+    toast.style.color = '#FFF';
+    toast.style.padding = '14px 22px';
+    toast.style.borderRadius = '24px';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.gap = '8px';
+    toast.style.zIndex = '2500';
+    toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
+    toast.style.opacity = '0';
+    toast.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s';
+    toast.style.pointerEvents = 'none';
+    toast.style.whiteSpace = 'nowrap';
+    
+    // .phone-container가 있을 경우 내부에 부착, 없을 경우 body에 부착
+    const phoneContainer = document.querySelector('.phone-container') || document.body;
+    phoneContainer.appendChild(toast);
+    
+    // 레이아웃 트리거 후 강제 리플로우
+    void toast.offsetHeight;
+    
+    // 활성화 상태 전환
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    toast.style.opacity = '1';
+    
+    // 2.5초 후 자동으로 서서히 사라지도록 처리
+    setTimeout(() => {
+        toast.style.transform = 'translateX(-50%) translateY(-10px)';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+        }, 400);
+    }, 2500);
+}
+
 
 /**
  * 리뷰 작성 화면에서 별점을 조작하는 함수
