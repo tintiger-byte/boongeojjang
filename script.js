@@ -536,56 +536,104 @@ async function requestTossPayment() {
 }
 
 /**
- * 토스페이먼츠 SDK가 body에 생성하여 부착하는 iframe을 실시간으로 감지하여 .phone-container 내부로 강제 이동 및 스타일 조정
+ * 토스페이먼츠 SDK가 생성하는 결제창 iframe 및 컨테이너를 실시간으로 감지하여 .phone-container 내부로 강제 이동 및 스타일 조정
  */
 function initTossIframeObserver() {
+    const phoneContainer = document.querySelector('.phone-container');
+    if (!phoneContainer) return;
+
+    // 1. 강제 가로채기 및 위치 교정 함수 정의
+    const interceptAndFix = (node) => {
+        // 이미 phoneContainer 내부의 자식이면 무시
+        if (phoneContainer.contains(node)) return;
+
+        // 토스페이먼츠 관련 엘리먼트인지 엄격 검증
+        let isTossElement = false;
+
+        // A. 노드 자체가 iframe이거나 내부에 iframe을 가지고 있는 경우
+        const iframe = node.tagName === 'IFRAME' ? node : (node.querySelector ? node.querySelector('iframe') : null);
+        if (iframe) {
+            const src = iframe.src || '';
+            if (src.includes('tosspayments') || src.includes('toss') || iframe.id.includes('toss') || iframe.name.includes('toss')) {
+                isTossElement = true;
+            }
+        }
+
+        // B. 노드의 ID나 클래스명, 또는 고유 스타일 속성으로 검증 (토스 결제창의 고유 특징인 초고값 z-index와 fixed 포지션)
+        const id = node.id || '';
+        const className = typeof node.className === 'string' ? node.className : '';
+        const styleAttr = node.getAttribute('style') || '';
+        if (
+            id.includes('toss') || 
+            className.includes('toss') || 
+            (styleAttr.includes('z-index') && (styleAttr.includes('2147483647') || styleAttr.includes('9999')))
+        ) {
+            isTossElement = true;
+        }
+
+        if (isTossElement) {
+            console.log('토스페이먼츠 엘리먼트 감지 및 폰 목업 내부로 가로채기 이동 실행:', node);
+            
+            // 폰 컨테이너 내부로 이동
+            phoneContainer.appendChild(node);
+
+            // 포지션을 absolute로 강제 고정하여 폰 프레임 밖으로 나가지 않도록 완전 교정
+            node.style.setProperty('position', 'absolute', 'important');
+            node.style.setProperty('top', '0', 'important');
+            node.style.setProperty('left', '0', 'important');
+            node.style.setProperty('width', '100%', 'important');
+            node.style.setProperty('height', '100%', 'important');
+            node.style.setProperty('z-index', '2000', 'important');
+            node.style.setProperty('border-radius', '36px', 'important');
+            node.style.setProperty('overflow', 'hidden', 'important');
+            node.style.setProperty('transform', 'none', 'important');
+            node.style.setProperty('max-width', '100%', 'important');
+            node.style.setProperty('max-height', '100%', 'important');
+
+            if (iframe && iframe !== node) {
+                iframe.style.setProperty('position', 'absolute', 'important');
+                iframe.style.setProperty('top', '0', 'important');
+                iframe.style.setProperty('left', '0', 'important');
+                iframe.style.setProperty('width', '100%', 'important');
+                iframe.style.setProperty('height', '100%', 'important');
+                iframe.style.setProperty('border-radius', '36px', 'important');
+            }
+        }
+    };
+
+    // 2. MutationObserver 설정 (신속 감지용)
     const targetNode = document.body;
-    const config = { childList: true };
-    
-    const callback = function(mutationsList, observer) {
+    const config = { childList: true, subtree: true };
+    const callback = function(mutationsList) {
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(node => {
-                    // body에 바로 추가된 iframe 또는 iframe을 래핑한 div 컨테이너 감지
-                    if (node.tagName === 'IFRAME' || (node.querySelector && node.querySelector('iframe'))) {
-                        const iframe = node.tagName === 'IFRAME' ? node : node.querySelector('iframe');
-                        
-                        // 토스페이먼츠 서비스 URL 확인
-                        if (iframe && (iframe.src.includes('tosspayments.com') || iframe.src.includes('tosspayments'))) {
-                            const phoneContainer = document.querySelector('.phone-container');
-                            if (phoneContainer) {
-                                // .phone-container 내부로 iframe 또는 부모 div 노드 강제 이동
-                                phoneContainer.appendChild(node);
-                                
-                                // 원래 SDK가 설정한 화면 덮기용 fixed 스타일을 폰 목업 내부를 덮는 absolute로 완전 변환
-                                node.style.position = 'absolute';
-                                node.style.top = '0';
-                                node.style.left = '0';
-                                node.style.width = '100%';
-                                node.style.height = '100%';
-                                node.style.zIndex = '999';
-                                if (node !== iframe) {
-                                    iframe.style.position = 'absolute';
-                                    iframe.style.top = '0';
-                                    iframe.style.left = '0';
-                                    iframe.style.width = '100%';
-                                    iframe.style.height = '100%';
-                                }
-                            }
-                            observer.disconnect(); // 가로채기 성공 후 리소스 해제
-                        }
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        interceptAndFix(node);
+                        // 자식 노드들도 탐색
+                        node.querySelectorAll && node.querySelectorAll('*').forEach(child => interceptAndFix(child));
                     }
                 });
             }
         }
     };
-    
     const observer = new MutationObserver(callback);
     observer.observe(targetNode, config);
-    
-    // 만약 예외 상황으로 인해 30초 내에 감지되지 않을 경우의 타임아웃 릴리즈
+
+    // 3. 주기적 폴링 스캐너 가동 (CORS 및 비동기 지연 마운트 대비용 100% 안전장치)
+    const scanInterval = setInterval(() => {
+        // body 직속 자식 중 z-index가 매우 높은 div 또는 toss iframe 탐색
+        document.body.childNodes.forEach(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                interceptAndFix(node);
+            }
+        });
+    }, 100);
+
+    // 30초 후 모든 감시 리소스 자동 반환 (결제창 구동 완료 시점 대비)
     setTimeout(() => {
         observer.disconnect();
+        clearInterval(scanInterval);
     }, 30000);
 }
 

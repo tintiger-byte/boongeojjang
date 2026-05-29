@@ -680,9 +680,15 @@ body {
    토스페이먼츠 결제창 모바일 폰 프레임 밀착 고정 스타일
    ========================================================================== */
 
-/* 토스페이먼츠 iframe이 .phone-container 내부로 들어왔을 때의 스타일 조율 */
+/* 토스페이먼츠 iframe 및 그 부모 wrapper가 .phone-container 아래에 있을 때 absolute 위치 및 크기 강제 고정 */
 .phone-container iframe,
-.phone-container div[style*="z-index"][style*="fixed"] {
+.phone-container iframe[src*="tosspayments"],
+.phone-container div:has(iframe),
+.phone-container div:has(iframe[src*="tosspayments"]),
+.phone-container [id*="toss"],
+.phone-container [class*="toss"],
+.phone-container div[style*="z-index"][style*="fixed"],
+.phone-container div[style*="2147483647"] {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
@@ -690,11 +696,18 @@ body {
     height: 100% !important;
     border: none !important;
     border-radius: 36px !important;
-    z-index: 999 !important;
+    z-index: 2000 !important;
     overflow: hidden !important;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
 }
 
 /* SDK가 생성한 고정 래퍼 div 내부에 삽입된 iframe의 크기를 100%로 강제하여 모바일 뷰포트 레이아웃 유도 */
+.phone-container div:has(iframe) iframe,
 .phone-container div[style*="z-index"][style*="fixed"] iframe {
     position: absolute !important;
     top: 0 !important;
