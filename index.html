@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>붕어짱 - 프리미엄 붕어빵 주문 앱</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- 토스페이먼츠 V2 표준 결제창 SDK 로드 및 모바일 레이아웃 강제 위장 -->
+    <script>
+        // 1. User-Agent를 iPhone으로 임시 위장 (SDK 로드 시 모바일용 결제창 생성 유도)
+        const _originalUA = navigator.userAgent;
+        const _originalPF = navigator.platform;
+        try {
+            Object.defineProperty(navigator, 'userAgent', {
+                get: function () { return 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'; },
+                configurable: true
+            });
+            Object.defineProperty(navigator, 'platform', {
+                get: function () { return 'iPhone'; },
+                configurable: true
+            });
+        } catch (e) {
+            console.warn('UA spoof failed:', e);
+        }
+    </script>
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+    <script>
+        // 2. SDK 초기 로드 및 파싱 완료 후 원래 데스크톱 User-Agent로 안전 복구
+        try {
+            Object.defineProperty(navigator, 'userAgent', {
+                get: function () { return _originalUA; },
+                configurable: true
+            });
+            Object.defineProperty(navigator, 'platform', {
+                get: function () { return _originalPF; },
+                configurable: true
+            });
+        } catch (e) {
+            console.warn('UA restore failed:', e);
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class="phone-container">
+        <div class="status-bar">
+            <span class="time">9:41</span>
+            <div class="status-icons">
+                <span class="material-icons-round" style="font-size: 14px;">signal_cellular_alt</span>
+                <span class="material-icons-round" style="font-size: 14px;">wifi</span>
+                <span class="material-icons-round" style="font-size: 14px;">battery_full</span>
+            </div>
+        </div>
+
+        <div id="scr-intro" class="screen active">
+            <div class="intro-content" style="margin-top: 25px; margin-bottom: 10px;">
+                <img class="main-logo-img" src="top_fish.png" alt="붕어빵 로고" style="width: 70px; cursor: pointer;" onclick="secretAdminTap()">
+                <h1 class="app-title" style="font-size: 42px; margin-bottom: 12px;">붕어짱</h1>
+                <div class="intro-graphic" style="margin: 5px 0;">
+                    <img class="family-fish-img" src="family_fish.png" alt="붕어빵 가족" style="width: 150px;">
+                </div>
+                <p class="intro-text" style="font-size: 18px; margin-top: 15px;">붕어빵 여정을 시작해보세요</p>
+            </div>
+            <div class="btn-group-bottom"
+                style="display: flex; flex-direction: column; gap: 11px; margin-bottom: 12px; margin-top: 0; padding: 0 4px;">
+                <p
+                    style="font-size: 11.5px; font-weight: 700; color: #8D6E63; text-align: center; margin: 0 0 -2px 0; letter-spacing: -0.3px; font-family: inherit;">
+                    💡 회원가입 및 로그인 없이 주문은 가능합니다.
+                </p>
+                <button class="btn btn-primary" onclick="navigateTo('scr-detail')"
+                    style="margin: 0; padding: 11px 0; font-size: 15.5px;">주문하기</button>
+                <button class="btn btn-secondary" onclick="navigateTo('scr-login')"
+                    style="margin: 0; padding: 11px 0; font-size: 15.5px;">로그인</button>
+                <button class="btn btn-secondary" onclick="navigateTo('scr-register')"
+                    style="margin: 0; padding: 11px 0; font-size: 15.5px;">회원가입</button>
+                <p
+                    style="font-size: 11.5px; font-weight: 700; color: #8D6E63; text-align: center; margin: 4px 0 0 0; letter-spacing: -0.3px; font-family: inherit;">
+                    ✨ 회원가입 및 로그인 시 포인트 적립이 가능합니다.
+                </p>
+            </div>
+        </div>
+
+        <div id="scr-login" class="screen" style="overflow: hidden;">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-intro')">home</span>
+                <h2>로그인</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="overflow: hidden; padding-top: 0;">
+                <div style="text-align: center; margin: 16px 0 10px 0;">
+                    <img src="top_fish.png" alt="붕어짱 로고" style="width: 72px; height: auto; object-fit: contain;">
+                </div>
+                <p class="sub-intro-text" style="margin-bottom: 16px; font-size: 14px;">다시 오신 것을 환영합니다!</p>
+
+                <div class="input-form" style="gap: 10px; margin-bottom: 14px;">
+                    <div class="input-field" style="padding: 11px 16px;">
+                        <span class="material-icons-round font-muted">phone</span>
+                        <input type="tel" id="login-phone-input" placeholder="전화번호 입력 (010-XXXX-XXXX)">
+                    </div>
+                    <div class="input-field" style="padding: 11px 16px;">
+                        <span class="material-icons-round font-muted">vpn_key</span>
+                        <input type="password" id="login-pw-input" placeholder="비밀번호 입력 (숫자 6자리)" pattern="[0-9]*" inputmode="numeric"
+                            maxlength="6">
+                        <span class="material-icons-round font-muted click-icon"
+                            onclick="togglePassword(this)">visibility_off</span>
+                    </div>
+                </div>
+                <p class="form-notice" style="margin: 8px 0; font-size: 13px;">붕어짱 계정으로 로그인하여<br>나만의 맛있는 여정을 계속하세요!</p>
+
+                <div class="btn-group-dual"
+                    style="display: flex; gap: 12px; padding: 0 4px; margin-top: auto; margin-bottom: 12px;">
+                    <button class="btn btn-primary" onclick="handleLogin()"
+                        style="flex: 1; margin: 0; padding: 13px 0; font-size: 15px; font-weight: 800;">로그인</button>
+                    <button class="btn" onclick="navigateTo('scr-reviews')"
+                        style="flex: 1; margin: 0; padding: 13px 0; font-size: 15px; font-weight: 800; border: 2.2px solid #D38E32; background-color: transparent; color: #D38E32; box-shadow: 0 4px 12px rgba(211,142,50,0.06);">상품리뷰</button>
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; padding: 0 12px; margin-top: 8px; margin-bottom: 12px;">
+                    <button class="btn btn-link" onclick="navigateTo('scr-find-password')"
+                        style="font-size: 12.5px; box-shadow: none; width: auto; padding: 4px; text-decoration: underline; color: #8D6E63;">비밀번호
+                        찾기</button>
+                    <button class="btn btn-link" onclick="navigateTo('scr-register')"
+                        style="font-size: 12.5px; box-shadow: none; width: auto; padding: 4px; font-weight: 800; color: #D38E32;">회원가입
+                        하기</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-find-password" class="screen" style="overflow: hidden;">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-login')">arrow_back</span>
+                <h2>비밀번호 찾기</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="overflow: hidden; padding-top: 0;">
+                <div style="text-align: center; margin: 24px 0 16px 0;">
+                    <img src="top_fish.png" alt="붕어짱 로고" style="width: 72px; height: auto; object-fit: contain;">
+                </div>
+                <h3 style="font-size: 18px; font-weight: 800; color: #000; text-align: center; margin-bottom: 8px;">비밀번호
+                    찾기</h3>
+                <p class="sub-intro-text"
+                    style="margin-bottom: 24px; font-size: 13.5px; text-align: center; line-height: 1.4; color: #5D4037;">
+                    가입하신 전화번호를 입력하시면<br>비밀번호를 SMS 문자로 즉시 발송해 드립니다.
+                </p>
+
+                <div class="input-form" style="gap: 12px; margin-bottom: 18px;">
+                    <div class="input-field" style="padding: 12px 18px;">
+                        <span class="material-icons-round font-muted">phone</span>
+                        <input type="tel" id="find-password-phone" placeholder="가입한 전화번호 입력 (010-XXXX-XXXX)">
+                    </div>
+                </div>
+
+                <p class="form-notice"
+                    style="margin: 8px 0 20px 0; font-size: 12px; color: #8D6E63; line-height: 1.45; text-align: center;">
+                    💡 문자가 오지 않을 경우, 입력하신 전화번호가<br>회원 정보와 일치하는지 확인해 주세요.
+                </p>
+
+                <button class="btn btn-primary" onclick="sendPasswordSMS()"
+                    style="width: 100%; border: none; outline: none; background-color: #D38E32; color: #FFF; padding: 15px 0; border-radius: 28px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(211,142,50,0.25); transition: transform 0.2s active, background-color 0.2s; margin-bottom: 12px;">비밀번호
+                    발송하기</button>
+
+                <button class="btn btn-link" onclick="navigateTo('scr-login')"
+                    style="margin-top: 4px; font-size: 13px; margin-bottom: 12px; box-shadow: none;">로그인 화면으로
+                    돌아가기</button>
+            </div>
+        </div>
+
+        <div id="scr-register" class="screen" style="overflow: hidden;">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-intro')">home</span>
+                <h2>회원가입</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="overflow: hidden; padding-top: 0;">
+                <div style="text-align: center; margin: 8px 0 6px 0;">
+                    <img src="top_fish.png" alt="붕어짱 로고" style="width: 64px; height: auto; object-fit: contain;">
+                </div>
+                <p class="sub-intro-text" style="margin-bottom: 12px; font-size: 13px;">나만의 붕어빵 여정을 시작해보세요!</p>
+
+                <div class="input-form" style="gap: 8px; margin-bottom: 10px;">
+                    <!-- 1. 전화번호 (맨위로) -->
+                    <div class="input-field" style="padding: 10px 16px;">
+                        <span class="material-icons-round font-muted">phone</span>
+                        <input type="tel" id="register-phone-input" placeholder="전화번호 입력 (010-XXXX-XXXX)">
+                    </div>
+                    <!-- 2. 별명 -->
+                    <div class="input-field" style="padding: 10px 16px;">
+                        <span class="material-icons-round font-muted">person</span>
+                        <input type="text" id="register-name-input" placeholder="별명 입력 (예: 붕어대장)">
+                    </div>
+                    <!-- 3. 비밀번호 (숫자 6자리) -->
+                    <div class="input-field" style="padding: 10px 16px;">
+                        <span class="material-icons-round font-muted">vpn_key</span>
+                        <input type="password" id="register-pw-input" placeholder="비밀번호 (숫자 6자리 입력)" pattern="[0-9]*" inputmode="numeric"
+                            maxlength="6">
+                        <span class="material-icons-round font-muted click-icon"
+                            onclick="togglePassword(this)">visibility_off</span>
+                    </div>
+                    <!-- 4. 비밀번호 확인 (숫자 6자리) -->
+                    <div class="input-field" style="padding: 10px 16px;">
+                        <span class="material-icons-round font-muted">vpn_key</span>
+                        <input type="password" id="register-pw-confirm-input" placeholder="비밀번호 다시 입력 (숫자 6자리)" pattern="[0-9]*" inputmode="numeric"
+                            maxlength="6">
+                        <span class="material-icons-round font-muted click-icon"
+                            onclick="togglePassword(this)">visibility_off</span>
+                    </div>
+                </div>
+                <p class="form-notice"
+                    style="margin: 8px 0; font-size: 12px; color: #8D6E63; line-height: 1.45; text-align: center;">
+                    🔒 비밀번호는 보다 편리한 로그인을 위해 <br><strong>숫자 6자리</strong>로 설정해 주세요.<br>
+                    다양한 붕어빵 맛을 발견하고 포인트 적립을 시작하세요!
+                </p><br>
+                <button class="btn btn-primary" onclick="handleRegister()"
+                    style="padding: 13px 16px; font-size: 16px; margin-bottom: 0;">회원가입 하기</button>
+                <button class="btn btn-link" onclick="navigateTo('scr-intro')"
+                    style="margin-top: 6px; font-size: 13px;">이미 계정이 있으신가요? 로그인</button>
+            </div>
+        </div>
+
+        <div id="scr-dough" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-detail')">home</span>
+                <h2 class="brand-text">붕어짱</h2>
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')" style="color: #4A2B20; font-size: 24px;">settings</span>
+            </div>
+            <div class="screen-content">
+                <div class="title-section" style="margin-top: 0;">
+                    <h3 class="main-step-title" style="font-size: 22px; margin-bottom: 2px;">빵 종류 선택</h3>
+                </div>
+                <p class="location-sub" style="margin-bottom: 10px;">붕어빵 도우를 선택해 주세요. <br>수량은 장바구니에서 조정해 주세요.</p>
+                <br><br>
+
+                <div class="grid-2x2">
+                    <div class="menu-card selected" onclick="selectDough(this, 'plain')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="plain_dough.png" alt="플레인">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>플레인</h4>
+                        <p>오리지널 붕어빵</p>
+                    </div>
+                    <div class="menu-card" onclick="selectDough(this, 'choco')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="choco_dough.png" alt="초콜릿">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>초콜릿</h4>
+                        <p>진하고 달콤한 초코</p>
+                    </div>
+                    <div class="menu-card" onclick="selectDough(this, 'matcha')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="matcha_dough.png" alt="말차">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>말차</h4>
+                        <p>쌉싸름한 녹차향</p>
+                    </div>
+                    <div class="menu-card" onclick="selectDough(this, 'egg')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="egg_dough.png" alt="계란">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>에그</h4>
+                        <p>부드러운 에그 커스터드</p>
+                    </div>
+                </div>
+
+                <div class="btn-group-bottom" style="margin-top: auto; margin-bottom: 12px; padding: 0 4px;">
+                    <button class="btn btn-primary" id="btn-next-ingredients" onclick="goToIngredients()">속재료
+                        선택하기</button>
+                    <p
+                        style="font-size: 12.5px; font-weight: 700; color: #8D6E63; text-align: center; margin: 10px 0 0 0; letter-spacing: -0.3px;">
+                        ✨ 이제부터 맛있는 속재료를 선택하세요.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-detail" class="screen">
+            <div class="app-header" style="padding: 18px 24px; border-bottom: none;">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-intro')"
+                    style="font-size: 24px; font-weight: 900; color: #000;">home</span>
+                <h2
+                    style="font-size: 32px; font-weight: 800; color: #D38E32; letter-spacing: -0.5px; margin: 0; position: absolute; left: 50%; transform: translateX(-50%);">
+                    붕어짱</h2>
+
+            </div>
+            <div class="screen-content"
+                style="padding: 0 24px 12px 24px; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="detail-hero"
+                    style="position: relative; display: flex; justify-content: center; align-items: center; margin-top: 6px; margin-bottom: 8px;">
+                    <div class="detail-slider-container"
+                        style="width: 210px; height: 210px; border-radius: 50%; overflow: hidden; position: relative; box-shadow: 0 12px 36px rgba(62,39,35,0.08);">
+                        <div class="detail-slider-track"
+                            style="display: flex; width: 300%; height: 100%; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);">
+                            <img class="detail-hero-img" src="detail_hero_fish.png" alt="슈크림 붕어빵"
+                                style="width: 210px; height: 210px; object-fit: cover;">
+                            <img class="detail-hero-img" src="detail_hero_fish_2.png" alt="도우 선택"
+                                style="width: 210px; height: 210px; object-fit: cover;">
+                            <img class="detail-hero-img" src="detail_hero_fish_3.png" alt="속재료 선택"
+                                style="width: 210px; height: 210px; object-fit: contain; padding: 14px; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                </div>
+                <div class="indicator-dots"
+                    style="display: flex; justify-content: center; gap: 8px; margin-bottom: 10px;">
+                    <span class="dot active" onclick="slideHero(0)"
+                        style="width: 8px; height: 8px; border-radius: 50%; background-color: #D38E32; cursor: pointer; transition: background-color 0.3s, opacity 0.3s;"></span>
+                    <span class="dot" onclick="slideHero(1)"
+                        style="width: 8px; height: 8px; border-radius: 50%; background-color: #D3E0E2; opacity: 0.8; cursor: pointer; transition: background-color 0.3s, opacity 0.3s;"></span>
+                    <span class="dot" onclick="slideHero(2)"
+                        style="width: 8px; height: 8px; border-radius: 50%; background-color: #D3E0E2; opacity: 0.8; cursor: pointer; transition: background-color 0.3s, opacity 0.3s;"></span>
+                </div>
+                <div class="detail-info-box" style="margin-bottom: 12px;">
+                    <h3 class="detail-title"
+                        style="font-size: 22px; font-weight: 800; color: #000; line-height: 1.25; margin: 0 0 8px 0; white-space: nowrap;">
+                        달콤하고 부드러운 붕어빵</h3>
+                    <p class="detail-price" style="font-size: 20px; font-weight: 900; color: #000; margin: 0 0 10px 0;">
+                        ₩2,500</p>
+                    <p class="detail-desc"
+                        style="font-size: 13px; color: #555; line-height: 1.5; font-weight: 500; margin: 0;">
+                        갓 구워낸 바삭한 겉과, 입안 가득 퍼지는 달콤하고 풍성한 속재료의 완벽한 조화를 만나보세요.
+                    </p>
+                    <p class="detail-steps-tip"
+                        style="font-size: 13px; color: #D38E32; font-weight: 700; line-height: 1.4; margin-top: 8px; letter-spacing: -0.3px;">
+                        👉 빵(도우)과 속재료 그리고 음료를 선택하세요.
+                    </p>
+                </div>
+                <button class="btn btn-primary margin-top-auto" onclick="navigateTo('scr-dough')"
+                    style="width: 100%; border: none; outline: none; background-color: #D38E32; color: #FFF; padding: 13px 0; border-radius: 28px; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(211,142,50,0.25); transition: transform 0.2s active, background-color 0.2s;">메뉴
+                    선택</button>
+                <p
+                    style="font-size: 12px; font-weight: 700; color: #8D6E63; text-align: center; margin: 8px 0 0 0; letter-spacing: -0.3px;">
+                    💡 수량은 장바구니에서 수정하시면 됩니다
+                </p>
+                <div style="text-align: center; margin-top: 12px;">
+                    <button class="btn" onclick="navigateTo('scr-reviews')"
+                        style="width: 100%; border: 2.2px solid #D38E32; background-color: transparent; color: #D38E32; padding: 12px 0; border-radius: 28px; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,142,50,0.06);">
+                        <span class="material-icons-round"
+                            style="font-size: 19px; color: #D38E32; vertical-align: middle;">rate_review</span>
+                        상품 리뷰
+                    </button>
+                    <p
+                        style="font-size: 11px; font-weight: 700; color: #8D6E63; margin: 8px 0 0 0; letter-spacing: -0.3px;">
+                        🐟 <span onclick="danceFish()"
+                            style="color: #D38E32; text-decoration: underline; cursor: pointer; font-weight: 800; transition: color 0.2s;"
+                            onmouseover="this.style.color='#BF7B24'" onmouseout="this.style.color='#D38E32'">맛있는
+                            리뷰</span>는 붕어도 춤추게 합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-ingredients" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-detail')">home</span>
+                <h2 class="brand-text">붕어짱</h2>
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')" style="color: #4A2B20; font-size: 24px;">settings</span>
+            </div>
+            <div class="screen-content">
+                <h3 class="main-step-title text-center"
+                    style="font-size: 32px; font-weight: 800; color: #000; margin-top: 15px; margin-bottom: 20px;">속 재료
+                    선택</h3>
+                <p class="text-center"
+                    style="font-size: 14px; font-weight: 700; color: #8D6E63; margin-top: -10px; margin-bottom: 15px;">
+                    수량은 장바구니에서 조정해 주세요.
+                </p>
+
+                <div class="grid-2x2">
+                    <div class="menu-card" onclick="selectIngredient(this, 'choco')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="choco_ingredient.png" alt="초콜릿">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>₩2,500</h4>
+                        <p>진하고 달콤한 초코</p>
+                    </div>
+                    <div class="menu-card selected" onclick="selectIngredient(this, 'custard')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="custard_ingredient.png" alt="슈크림">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>₩2,500</h4>
+                        <p>부드러운 시그니처 슈크림</p>
+                    </div>
+                    <div class="menu-card" onclick="selectIngredient(this, 'redbean')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="redbean_ingredient.png" alt="단팥">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>₩2,500</h4>
+                        <p>달지 않고 고소한 전통 단팥</p>
+                    </div>
+                    <div class="menu-card" onclick="selectIngredient(this, 'honey')">
+                        <div class="fish-circle-wrap">
+                            <img class="fish-circle-img" src="honey_ingredient.png" alt="꿀과 견과">
+                            <span class="material-icons-round select-check-badge">check_circle</span>
+                        </div>
+                        <h4>₩2,500</h4>
+                        <p>달콤한 꿀과 아삭한 견과류</p>
+                    </div>
+                </div>
+
+                <div class="btn-group-dual" style="display: flex; gap: 12px; padding: 0 4px; margin-bottom: 8px;">
+                    <button class="btn btn-secondary" onclick="addToCartAndNavigate()"
+                        style="flex: 1; margin: 0; padding: 14px 0; font-size: 16px;">장바구니 담기</button>
+                    <button class="btn btn-primary" id="btn-next-beverages" onclick="goToBeverages()"
+                        style="flex: 1; margin: 0; padding: 14px 0; font-size: 16px;">음료 선택하기</button>
+                </div>
+
+
+            </div>
+        </div>
+
+        <div id="scr-beverages" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-detail')">home</span>
+                <h2 class="brand-text">붕어짱</h2>
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')" style="color: #4A2B20; font-size: 24px;">settings</span>
+            </div>
+            <div class="screen-content">
+                <h3 class="main-step-title text-center"
+                    style="font-size: 32px; font-weight: 800; color: #000; margin-top: 15px; margin-bottom: 20px;">음료 메뉴
+                    선택</h3>
+
+                <div class="title-section"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h4 class="sub-section-title" style="font-size: 24px; font-weight: 800; color: #000; margin: 0;">커피
+                        페어링</h4>
+
+                </div>
+
+                <div class="drink-card-new" onclick="navigateTo('scr-cart')"
+                    style="position: relative; margin-bottom: 16px; cursor: pointer; overflow: hidden; border-radius: 24px; box-shadow: 0 8px 24px rgba(62,39,35,0.06); transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    <img src="iced_coffee.png" alt="아이스 커피"
+                        style="width: 100%; height: auto; display: block; object-fit: cover;">
+                    <div
+                        style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 24px 20px 14px 20px; display: flex; justify-content: space-between; align-items: flex-end; color: #FFF;">
+                        <div>
+                            <h4
+                                style="margin: 0; font-size: 18px; font-weight: 800; color: #FFF; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">
+                                아이스 커피</h4>
+                            <p
+                                style="margin: 2px 0 0 0; font-size: 12px; color: #E0E0E0; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">
+                                시원하고 깊은 풍미의 에스프레소</p>
+                        </div>
+                        <span
+                            style="font-size: 19px; font-weight: 900; color: #FFF; background-color: #D38E32; padding: 4px 12px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">₩2,000</span>
+                    </div>
+                </div>
+
+                <div class="drink-card-new" onclick="navigateTo('scr-cart')"
+                    style="position: relative; margin-bottom: 16px; cursor: pointer; overflow: hidden; border-radius: 24px; box-shadow: 0 8px 24px rgba(62,39,35,0.06); transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    <img src="hot_coffee.png" alt="뜨거운 커피"
+                        style="width: 100%; height: auto; display: block; object-fit: cover;">
+                    <div
+                        style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 24px 20px 14px 20px; display: flex; justify-content: space-between; align-items: flex-end; color: #FFF;">
+                        <div>
+                            <h4
+                                style="margin: 0; font-size: 18px; font-weight: 800; color: #FFF; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">
+                                뜨거운 커피</h4>
+                            <p
+                                style="margin: 2px 0 0 0; font-size: 12px; color: #E0E0E0; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">
+                                갓 추출한 따뜻하고 진한 아메리카노</p>
+                        </div>
+                        <span
+                            style="font-size: 19px; font-weight: 900; color: #FFF; background-color: #D38E32; padding: 4px 12px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">₩2,000</span>
+                    </div>
+                </div>
+                <p
+                    style="font-size: 13px; font-weight: 700; color: #8D6E63; text-align: center; margin: 8px 0 12px 0; letter-spacing: -0.3px;">
+                    💡 수량은 장바구니에서 조정해 주세요.
+                </p>
+            </div>
+        </div>
+
+        <div id="scr-cart" class="screen">
+            <div class="app-header" style="padding: 18px 24px; border-bottom: none; position: relative;">
+                <span class="material-icons-round click-icon"
+                    onclick="window.history.back() || navigateTo('scr-detail')"
+                    style="font-size: 24px; font-weight: 900; color: #000;">home</span>
+                <h2
+                    style="font-size: 32px; font-weight: 800; color: #000; letter-spacing: -0.5px; margin: 0; position: absolute; left: 50%; transform: translateX(-50%);">
+                    장바구니</h2>
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')" style="color: #4A2B20; font-size: 24px; position: absolute; right: 24px; z-index: 5;">settings</span>
+            </div>
+            <div class="screen-content" style="padding: 0 24px 24px 24px;">
+                <div class="cart-notice"
+                    style="font-size: 14px; font-weight: 700; color: #D38E32; text-align: center; margin-bottom: 20px; background-color: #FFFDF5; border: 1px dashed rgba(211,142,50,0.3); padding: 10px; border-radius: 16px;">
+                    주문시 수량을 확인해 주세요.
+                </div>
+
+                <div class="cart-list" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px;">
+                    <!-- 1번째 붕어빵: 2500원 * 2개 = 5,000원 -->
+                    <div class="cart-item" data-price="2500"
+                        style="background-color: #FFF; border: 1px solid rgba(62,39,35,0.06); border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 18px; box-shadow: 0 4px 16px rgba(62,39,35,0.03); transition: transform 0.2s;">
+                        <img class="cart-item-img" src="egg_dough.png" alt="슈크림 붕어빵"
+                            style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover;">
+                        <div class="item-details" style="flex: 1;">
+                            <h4
+                                style="font-size: 17px; font-weight: 800; color: #000; margin: 0 0 2px 0; line-height: 1.25;">
+                                에그</h4>
+                            <p
+                                style="font-size: 17px; font-weight: 800; color: #8D6E63; margin: 0 0 6px 0; line-height: 1.25;">
+                                슈크림</p>
+                            <p class="item-price" style="font-size: 17px; font-weight: 800; color: #D38E32; margin: 0;">
+                                ₩5,000</p>
+                        </div>
+                        <div class="quantity-controller"
+                            style="display: flex; align-items: center; gap: 10px; background-color: #FFFDF5; border: 1px solid rgba(211,142,50,0.2); border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 6px rgba(62,39,35,0.03);">
+                            <div class="qty-btn btn-minus" onclick="changeQty(this, -1)"
+                                style="background-color: #FFF; color: #D38E32; border: 1px solid rgba(211,142,50,0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;">
+                                -</div>
+                            <span class="qty-num"
+                                style="font-size: 15px; font-weight: 800; color: #000; min-width: 16px; text-align: center;">2</span>
+                            <div class="qty-btn btn-plus" onclick="changeQty(this, 1)"
+                                style="background-color: #D38E32; color: #FFF; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(211,142,50,0.15); transition: all 0.2s; user-select: none;">
+                                +</div>
+                        </div>
+                    </div>
+                    <!-- 2번째 붕어빵: 2500원 * 1개 = 2,500원 -->
+                    <div class="cart-item" data-price="2500"
+                        style="background-color: #FFF; border: 1px solid rgba(62,39,35,0.06); border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 18px; box-shadow: 0 4px 16px rgba(62,39,35,0.03); transition: transform 0.2s;">
+                        <img class="cart-item-img" src="plain_dough.png" alt="단팥 붕어빵"
+                            style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover;">
+                        <div class="item-details" style="flex: 1;">
+                            <h4
+                                style="font-size: 17px; font-weight: 800; color: #000; margin: 0 0 2px 0; line-height: 1.25;">
+                                플레인</h4>
+                            <p
+                                style="font-size: 17px; font-weight: 800; color: #8D6E63; margin: 0 0 6px 0; line-height: 1.25;">
+                                단팥</p>
+                            <p class="item-price" style="font-size: 17px; font-weight: 800; color: #D38E32; margin: 0;">
+                                ₩2,500</p>
+                        </div>
+                        <div class="quantity-controller"
+                            style="display: flex; align-items: center; gap: 10px; background-color: #FFFDF5; border: 1px solid rgba(211,142,50,0.2); border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 6px rgba(62,39,35,0.03);">
+                            <div class="qty-btn btn-minus" onclick="changeQty(this, -1)"
+                                style="background-color: #FFF; color: #D38E32; border: 1px solid rgba(211,142,50,0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;">
+                                -</div>
+                            <span class="qty-num"
+                                style="font-size: 15px; font-weight: 800; color: #000; min-width: 16px; text-align: center;">1</span>
+                            <div class="qty-btn btn-plus" onclick="changeQty(this, 1)"
+                                style="background-color: #D38E32; color: #FFF; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(211,142,50,0.15); transition: all 0.2s; user-select: none;">
+                                +</div>
+                        </div>
+                    </div>
+                    <!-- 3번째 커피: 2000원 * 1개 = 2,000원 -->
+                    <div class="cart-item" data-price="2000"
+                        style="background-color: #FFF; border: 1px solid rgba(62,39,35,0.06); border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 18px; box-shadow: 0 4px 16px rgba(62,39,35,0.03); transition: transform 0.2s;">
+                        <img class="cart-item-img" src="iced_coffee_1.png" alt="아이스 커피"
+                            style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover;">
+                        <div class="item-details" style="flex: 1;">
+                            <h4 style="font-size: 18px; font-weight: 800; color: #000; margin: 0 0 4px 0;">아이스 커피</h4>
+                            <p class="item-price" style="font-size: 17px; font-weight: 800; color: #D38E32; margin: 0;">
+                                ₩2,000</p>
+                        </div>
+                        <div class="quantity-controller"
+                            style="display: flex; align-items: center; gap: 10px; background-color: #FFFDF5; border: 1px solid rgba(211,142,50,0.2); border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 6px rgba(62,39,35,0.03);">
+                            <div class="qty-btn btn-minus" onclick="changeQty(this, -1)"
+                                style="background-color: #FFF; color: #D38E32; border: 1px solid rgba(211,142,50,0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;">
+                                -</div>
+                            <span class="qty-num"
+                                style="font-size: 15px; font-weight: 800; color: #000; min-width: 16px; text-align: center;">1</span>
+                            <div class="qty-btn btn-plus" onclick="changeQty(this, 1)"
+                                style="background-color: #D38E32; color: #FFF; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(211,142,50,0.15); transition: all 0.2s; user-select: none;">
+                                +</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="receipt-box"
+                    style="background-color: transparent; border: none; padding: 0 4px; margin-bottom: 20px;">
+                    <div class="receipt-row final-row"
+                        style="display: flex; justify-content: space-between; font-size: 19px; font-weight: 800; color: #000;">
+                        <span>총 결제금액</span><span id="cart-final-pay"
+                            style="font-size: 22px; font-weight: 900; color: #D38E32;">₩9,500</span>
+                    </div>
+                </div>
+
+                <div class="btn-group-dual" style="display: flex; gap: 12px; padding: 0 4px; margin-bottom: 16px;">
+                    <button class="btn" onclick="navigateTo('scr-dough')"
+                        style="flex: 1; border: 2.2px solid #D38E32; background-color: transparent; color: #D38E32; padding: 12px 0; border-radius: 28px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 4px 12px rgba(211,142,50,0.06);">
+                        <span class="material-icons-round"
+                            style="font-size: 18px; color: #D38E32; vertical-align: middle;">add</span>
+                        붕어빵 추가하기
+                    </button>
+                    <button class="btn" onclick="navigateTo('scr-beverages')"
+                        style="flex: 1; border: 2.2px solid #D38E32; background-color: transparent; color: #D38E32; padding: 12px 0; border-radius: 28px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 4px 12px rgba(211,142,50,0.06);">
+                        <span class="material-icons-round"
+                            style="font-size: 18px; color: #D38E32; vertical-align: middle;">add</span>
+                        커피 추가하기
+                    </button>
+                </div>
+
+                <button class="btn btn-primary" onclick="requestTossPayment()"
+                    style="width: 100%; border: none; outline: none; background-color: #D38E32; color: #FFF; padding: 16px 0; border-radius: 28px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(211,142,50,0.25); transition: transform 0.2s active, background-color 0.2s; margin-bottom: 4px;">결제하기</button>
+                <p
+                    style="font-size: 13px; font-weight: 700; color: #E53935; text-align: center; margin: 8px 0 0 0; letter-spacing: -0.3px;">
+                    ⚠️ 반드시 수량 확인후 주문해 주세요
+                </p>
+            </div>
+        </div>
+
+        <div id="scr-reviews" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-detail')">home</span>
+                <h2>상품 평가</h2>
+                <button onclick="navigateTo('scr-write-review')"
+                    style="background-color: #D38E32; color: #FFF; border: none; padding: 6px 12px; border-radius: 14px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 3px; box-shadow: 0 2px 6px rgba(211,142,50,0.15);">
+                    <span class="material-icons-round" style="font-size: 13px;">edit</span>리뷰쓰기
+                </button>
+            </div>
+            <div class="screen-content">
+                <h3 class="main-step-title">인기 붕어빵 리뷰</h3>
+                <p
+                    style="font-size: 12.5px; font-weight: 700; color: #E53935; margin-top: -2px; margin-bottom: 14px; display: flex; align-items: center; gap: 4px; letter-spacing: -0.3px;">
+                    <span>⚠️</span> 리뷰 작성 시 로그인이 필요합니다.
+                </p>
+
+                <div class="rating-dashboard">
+                    <div class="big-score">
+                        <p class="font-muted size-sm" style="margin-bottom: 2px;">총 리뷰 수: 1,234</p>
+                        <h2>4.5</h2>
+                        <div class="stars-row">⭐⭐⭐⭐<span style="filter:grayscale(1)">⭐</span></div>
+                    </div>
+                    <div class="score-bars">
+                        <div class="bar-row"><span>5</span>
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-row"><span>4</span>
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width: 45%;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-row"><span>3</span>
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width: 15%;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-row"><span>1</span>
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width: 5%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="user-review-card">
+                    <div class="review-user-info">
+                        <div class="user-avatar">👩</div>
+                        <div>
+                            <h4 class="user-name" style="margin: 0;">김철수 <span class="badge-verified">Verified
+                                    Purchase</span></h4>
+                        </div>
+                        <div class="user-stars">⭐⭐⭐⭐⭐</div>
+                    </div>
+                    <p class="review-text">
+                        갓 구워서 겉은 바삭하고 속은 부드러운 슈크림이 가득 차 있어서 정말 맛있었습니다! 아이들도 좋아해서 재구매 의사 100% 입니다. 추천해요!
+                    </p>
+                    <div class="helpful-btn"><span class="material-icons-round">thumb_up_off_alt</span> helpful</div>
+                </div>
+
+                <div class="photo-review-section">
+                    <div class="recommend-header">
+                        <h4>회원 포토 리뷰</h4>
+                        <span class="font-amber">전체 보기</span>
+                    </div>
+                    <div class="photo-grid">
+                        <div class="photo-box"><img src="review_1.png" alt="포토 리뷰 1"></div>
+                        <div class="photo-box"><img src="review_2.png" alt="포토 리뷰 2"></div>
+                        <div class="photo-box"><img src="review_3.png" alt="포토 리뷰 3"></div>
+                        <div class="photo-box"><img src="review_4.png" alt="포토 리뷰 4"></div>
+                        <div class="photo-box"><img src="review_5.png" alt="포토 리뷰 5"></div>
+                        <div class="photo-box"><img src="review_6.png" alt="포토 리뷰 6"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="scr-write-review" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-reviews')">arrow_back</span>
+                <h2>리뷰 작성하기</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="padding: 10px 4px 20px 4px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 20px; font-weight: 800; color: #000; margin-bottom: 6px;">나의 붕어짱 평가</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); font-weight: 500;">맛있게 드셨나요? 소중한 의견을 공유해주세요!
+                    </p>
+                </div>
+
+                <!-- 별점 선택 영역 -->
+                <div
+                    style="background-color: #FFF; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 18px rgba(62,39,35,0.03); text-align: center;">
+                    <p style="font-size: 14px; font-weight: 700; color: #3E2723; margin-bottom: 10px;">별점 선택</p>
+                    <div id="rating-stars-write"
+                        style="display: flex; justify-content: center; gap: 8px; color: #FFB300; font-size: 32px; cursor: pointer;">
+                        <span class="material-icons-round star-btn" onclick="setRating(1)"
+                            style="font-size: 36px;">star</span>
+                        <span class="material-icons-round star-btn" onclick="setRating(2)"
+                            style="font-size: 36px;">star</span>
+                        <span class="material-icons-round star-btn" onclick="setRating(3)"
+                            style="font-size: 36px;">star</span>
+                        <span class="material-icons-round star-btn" onclick="setRating(4)"
+                            style="font-size: 36px;">star</span>
+                        <span class="material-icons-round star-btn" onclick="setRating(5)"
+                            style="font-size: 36px;">star</span>
+                    </div>
+                </div>
+
+                <!-- 리뷰 텍스트 작성 영역 -->
+                <div
+                    style="background-color: #FFF; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 18px rgba(62,39,35,0.03);">
+                    <p style="font-size: 14px; font-weight: 700; color: #3E2723; margin-bottom: 10px;">상세 리뷰 작성</p>
+                    <textarea id="review-comment-input" placeholder="겉은 바삭하고 속은 촉촉한 맛있는 리뷰를 작성해주세요! (최소 10자)"
+                        style="width: 100%; height: 120px; border: 1px solid #E0D4CD; border-radius: 12px; padding: 12px; font-size: 13.5px; font-family: inherit; resize: none; outline: none; background-color: #FCFDFD; transition: border-color 0.2s;"
+                        onfocus="this.style.borderColor='#D38E32'" onblur="this.style.borderColor='#E0D4CD'"></textarea>
+                </div>
+
+                <!-- 포토 등록 영역 -->
+                <div
+                    style="background-color: #FFF; border-radius: 20px; padding: 20px; margin-bottom: 24px; box-shadow: 0 6px 18px rgba(62,39,35,0.03);">
+                    <p style="font-size: 14px; font-weight: 700; color: #3E2723; margin-bottom: 10px;">포토 등록</p>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <div id="photo-upload-trigger" onclick="triggerPhotoUpload()"
+                            style="width: 80px; height: 80px; border: 2px dashed #D38E32; border-radius: 12px; background-color: #FFFDF5; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; color: #D38E32; transition: all 0.2s;">
+                            <span class="material-icons-round" style="font-size: 24px;">add_a_photo</span>
+                            <span style="font-size: 10px; font-weight: 700; margin-top: 4px;">사진 첨부</span>
+                        </div>
+                        <input type="file" id="review-photo-file" accept="image/*" style="display: none;"
+                            onchange="previewReviewPhoto(this)">
+                        <div id="photo-preview-container"
+                            style="display: none; position: relative; width: 80px; height: 80px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+                            <img id="photo-preview-img" src="" alt="리뷰 사진 프리뷰"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                            <div onclick="removeReviewPhoto()"
+                                style="position: absolute; top: 4px; right: 4px; background-color: rgba(0,0,0,0.6); color: #FFF; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer;">
+                                <span class="material-icons-round" style="font-size: 14px;">close</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 리뷰 등록하기 버튼 -->
+                <button class="btn btn-primary" onclick="submitReview()"
+                    style="width: 100%; border: none; outline: none; background-color: #D38E32; color: #FFF; padding: 14px 0; border-radius: 28px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(211,142,50,0.25); transition: transform 0.2s active, background-color 0.2s;">리뷰
+                    등록하기</button>
+            </div>
+        </div>
+
+        <div id="scr-qrcode" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-cart')">arrow_back_ios</span>
+                <h2>QR 코드 결제</h2>
+                <span></span>
+            </div>
+            <div class="screen-content text-center">
+                <h3 class="qr-scan-title">QR 코드 스캔</h3>
+                <p class="font-muted">주문 결제를 위해 QR코드를 스캔해주세요.</p>
+
+                <div class="qr-scanner-frame">
+                    <span class="material-icons-round camera-top-icon">photo_camera</span>
+                    <div class="qr-mock-code">
+                        <div class="qr-corner-fish">🐟</div>
+                        <div class="qr-corner-fish">🐟</div>
+                        <div class="qr-corner-fish">🐟</div>
+                        <div class="qr-center-badge">
+                            <div class="inner-badge">📋<br>주문</div>
+                            <div class="center-fish">🐟</div>
+                            <div class="inner-badge">💳<br>결제</div>
+                        </div>
+                        <div class="laser-line"></div>
+                    </div>
+                </div>
+
+                <div class="scan-status-alert">
+                    <span class="material-icons-round">check_circle_outline</span> 스캔 완료
+                </div>
+
+                <div class="order-info-card">
+                    <p class="font-bold">주문 번호: 20240722-001</p>
+                </div>
+
+                <div class="order-summary-card">
+                    <div class="summary-thumb">🐟</div>
+                    <div class="summary-text-right">
+                        <h4>슈크림 붕어빵 외 2종</h4>
+                        <p class="font-amber font-bold">총 결제 금액: ₩12,500</p>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-bar-bottom">
+                <div class="nav-item" onclick="navigateTo('scr-dough')"><span
+                        class="material-icons-round">home</span><span>홈</span></div>
+                <div class="nav-item"><span class="material-icons-round">phone</span></div>
+                <div class="nav-item active"><span class="material-icons-round">notifications</span></div>
+                <div class="nav-item"><span class="material-icons-round">no_accounts</span></div>
+            </div>
+        </div>
+
+        <div id="scr-reviews" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-ingredients')">arrow_back</span>
+                <h2 class="brand-text">붕어 리뷰</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="padding-bottom: 20px;">
+                <!-- 평점 및 리뷰 통계 카드 -->
+                <div
+                    style="background-color: #FFF; border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(62,39,35,0.04); display: flex; align-items: center; gap: 20px;">
+                    <div style="text-align: center; border-right: 1px solid #F0E6DF; padding-right: 20px;">
+                        <h1 style="font-size: 42px; font-weight: 900; color: #D38E32; margin: 0; line-height: 1;">4.9
+                        </h1>
+                        <div
+                            style="display: flex; justify-content: center; gap: 2px; margin: 6px 0 4px 0; color: #FFB300;">
+                            <span class="material-icons-round" style="font-size: 16px;">star</span>
+                            <span class="material-icons-round" style="font-size: 16px;">star</span>
+                            <span class="material-icons-round" style="font-size: 16px;">star</span>
+                            <span class="material-icons-round" style="font-size: 16px;">star</span>
+                            <span class="material-icons-round" style="font-size: 16px;">star</span>
+                        </div>
+                        <p style="font-size: 11px; color: #7A7A7A; margin: 0; font-weight: 600;">총 128개 리뷰</p>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <!-- 별점 막대 그래프 -->
+                        <div
+                            style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #5D4037;">
+                            <span style="width: 28px;">5점</span>
+                            <div
+                                style="flex: 1; height: 6px; background-color: #F5EFEB; border-radius: 3px; overflow: hidden;">
+                                <div style="width: 92%; height: 100%; background-color: #D38E32; border-radius: 3px;">
+                                </div>
+                            </div>
+                            <span style="width: 24px; text-align: right; color: #7A7A7A;">92%</span>
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #5D4037;">
+                            <span style="width: 28px;">4점</span>
+                            <div
+                                style="flex: 1; height: 6px; background-color: #F5EFEB; border-radius: 3px; overflow: hidden;">
+                                <div style="width: 6%; height: 100%; background-color: #D38E32; border-radius: 3px;">
+                                </div>
+                            </div>
+                            <span style="width: 24px; text-align: right; color: #7A7A7A;">6%</span>
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: #5D4037;">
+                            <span style="width: 28px;">3점</span>
+                            <div
+                                style="flex: 1; height: 6px; background-color: #F5EFEB; border-radius: 3px; overflow: hidden;">
+                                <div style="width: 2%; height: 100%; background-color: #D38E32; border-radius: 3px;">
+                                </div>
+                            </div>
+                            <span style="width: 24px; text-align: right; color: #7A7A7A;">2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 베스트 리뷰 칩 가로 스크롤 -->
+                <div
+                    style="display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none;">
+                    <span
+                        style="background-color: #D38E32; color: #FFF; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 700; white-space: nowrap; box-shadow: 0 4px 10px rgba(211,142,50,0.15);">전체</span>
+                    <span
+                        style="background-color: #FFF; color: #5D4037; border: 1px solid #E0D4CD; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 700; white-space: nowrap;">#겉바속촉
+                        (84)</span>
+                    <span
+                        style="background-color: #FFF; color: #5D4037; border: 1px solid #E0D4CD; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 700; white-space: nowrap;">#슈크림대박
+                        (52)</span>
+                    <span
+                        style="background-color: #FFF; color: #5D4037; border: 1px solid #E0D4CD; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 700; white-space: nowrap;">#인생붕어빵
+                        (47)</span>
+                </div>
+
+                <!-- 리뷰 카드 리스트 -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- 리뷰 1 -->
+                    <div
+                        style="background-color: #FFF; border-radius: 20px; padding: 16px; box-shadow: 0 6px 18px rgba(62,39,35,0.03); display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div
+                                    style="width: 32px; height: 32px; background-color: #FFECB3; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                                    🐱</div>
+                                <div>
+                                    <h5 style="margin: 0; font-size: 13px; font-weight: 700; color: #3E2723;">김*민</h5>
+                                    <p style="margin: 0; font-size: 10px; color: #9E9E9E;">2026.05.27</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; color: #FFB300; gap: 1px;">
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                            </div>
+                        </div>
+                        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #4E342E; font-weight: 500;">
+                            슈크림 붕어빵 맛집 인정입니다! 속재료가 꼬리까지 꽉 차 있어서 입안 가득 부드러움이 퍼지네요 ㅎㅎ 커피 조합 추천해요!
+                        </p>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <span
+                                style="background-color: #FCF8F5; color: #D38E32; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">#슈크림대박</span>
+                            <span
+                                style="background-color: #FCF8F5; color: #D38E32; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">#겉바속촉</span>
+                        </div>
+                    </div>
+
+                    <!-- 리뷰 2 -->
+                    <div
+                        style="background-color: #FFF; border-radius: 20px; padding: 16px; box-shadow: 0 6px 18px rgba(62,39,35,0.03); display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div
+                                    style="width: 32px; height: 32px; background-color: #C8E6C9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                                    🐼</div>
+                                <div>
+                                    <h5 style="margin: 0; font-size: 13px; font-weight: 700; color: #3E2723;">이*서</h5>
+                                    <p style="margin: 0; font-size: 10px; color: #9E9E9E;">2026.05.25</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; color: #FFB300; gap: 1px;">
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                                <span class="material-icons-round" style="font-size: 13px;">star</span>
+                            </div>
+                        </div>
+                        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #4E342E; font-weight: 500;">
+                            팥 소가 너무 자극적이지 않고 고급스럽게 달콤해서 부모님도 정말 좋아하셨어요! 식어도 바삭하고 고소함이 유지되네요.
+                        </p>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <span
+                                style="background-color: #FCF8F5; color: #D38E32; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">#전통단팥</span>
+                            <span
+                                style="background-color: #FCF8F5; color: #D38E32; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">#인생붕어빵</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 하단 리뷰 작성 유도 플로팅 버튼 -->
+                <button class="btn btn-primary" onclick="showReviewToast()"
+                    style="width: 100%; border: none; outline: none; background-color: #D38E32; color: #FFF; padding: 14px 0; border-radius: 28px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(211,142,50,0.2); margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.2s;">
+                    <span class="material-icons-round">edit</span>
+                    리뷰 작성하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 설정 및 마이페이지 화면 -->
+        <div id="scr-settings" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-dough')">arrow_back</span>
+                <h2>설정 및 마이페이지</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="padding-bottom: 24px;">
+                <!-- 사용자 정보 카드 -->
+                <div style="background-color: #FFF; border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(62,39,35,0.04); text-align: center;">
+                    <div style="width: 64px; height: 64px; background-color: #FCD96C; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; margin: 0 auto 12px auto; box-shadow: 0 4px 10px rgba(62, 39, 35, 0.08);">
+                        <span id="user-avatar-setting">🐟</span>
+                    </div>
+                    <h3 id="user-nickname-setting" style="font-size: 18px; font-weight: 800; color: #000; margin-bottom: 4px;">비회원 고객</h3>
+                    <p id="user-phone-setting" style="font-size: 13px; color: #7A7A7A; font-weight: 600; margin: 0 0 8px 0;">주문 정보가 기록되지 않습니다.</p>
+                    <span id="user-badge-setting" style="background-color: #F5EFE6; color: #5D4037; font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 700; display: inline-block;">비인증 게스트</span>
+                </div>
+
+                <!-- 설정 메뉴 목록 -->
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                    <!-- 관리자 전용 콘솔 버튼 (기본 비활성, admin 로그인시 활성) -->
+                    <button id="btn-admin-console" class="btn" onclick="navigateTo('scr-admin-console')" 
+                        style="display: none; width: 100%; border: none; outline: none; background-color: #4A2B20; color: #FFF; padding: 14px 0; border-radius: 20px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(74,43,32,0.15); align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; transition: transform 0.2s;">
+                        <span class="material-icons-round" style="font-size: 18px; vertical-align: middle;">admin_panel_settings</span>
+                        관리자 콘솔 진입
+                    </button>
+
+                    <div style="background-color: #FFF; border-radius: 20px; box-shadow: 0 4px 16px rgba(62,39,35,0.02); overflow: hidden;">
+                        <div onclick="alert('알림 설정이 변경되었습니다.')" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #F5EFE6; cursor: pointer;">
+                            <span style="font-size: 14px; font-weight: 700; color: #3E2723;">푸시 알림 설정</span>
+                            <span class="material-icons-round" style="color: #D38E32;">chevron_right</span>
+                        </div>
+                        <div onclick="alert('다크 모드는 추후 업데이트될 예정입니다.')" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #F5EFE6; cursor: pointer;">
+                            <span style="font-size: 14px; font-weight: 700; color: #3E2723;">화면 모드 (라이트)</span>
+                            <span class="material-icons-round" style="color: #D38E32;">chevron_right</span>
+                        </div>
+                        <div onclick="alert('약관 버전: v1.2 (2026-05)')" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #F5EFE6; cursor: pointer;">
+                            <span style="font-size: 14px; font-weight: 700; color: #3E2723;">서비스 이용약관</span>
+                            <span class="material-icons-round" style="color: #D38E32;">chevron_right</span>
+                        </div>
+                        <div onclick="handleLogout()" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; cursor: pointer;">
+                            <span style="font-size: 14px; font-weight: 700; color: #D38E32;">로그아웃</span>
+                            <span class="material-icons-round" style="color: #D38E32;">logout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 관리자 콘솔 화면 -->
+        <div id="scr-admin-console" class="screen">
+            <div class="app-header">
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')">arrow_back</span>
+                <h2>관리자 콘솔</h2>
+                <span></span>
+            </div>
+            <div class="screen-content" style="padding-bottom: 24px;">
+                <div class="admin-tabs" style="display: flex; background: #F5EFEB; border-radius: 14px; padding: 4px; margin-bottom: 16px; border: 1px solid rgba(62,39,35,0.08);">
+                    <div id="tab-admin-users" class="admin-tab active" onclick="switchAdminTab('users')" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 700; color: #8D6E63; border-radius: 10px; cursor: pointer; transition: all 0.2s;">회원관리</div>
+                    <div id="tab-admin-reviews" class="admin-tab" onclick="switchAdminTab('reviews')" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 700; color: #8D6E63; border-radius: 10px; cursor: pointer; transition: all 0.2s;">리뷰관리</div>
+                    <div id="tab-admin-register" class="admin-tab" onclick="switchAdminTab('register')" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 700; color: #8D6E63; border-radius: 10px; cursor: pointer; transition: all 0.2s;">상품등록</div>
+                </div>
+
+                <!-- 1. 회원관리 탭 내용 -->
+                <div id="admin-sec-users" class="admin-section" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <h3 style="font-size: 16px; font-weight: 800; color: #4A2B20; margin: 0;">가입 회원 목록</h3>
+                        <span style="font-size: 12px; color: #8D6E63; font-weight: 700;" id="admin-users-count">총 3명</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;" id="admin-users-list">
+                        <!-- 회원 리스트가 JS로 채워짐 -->
+                    </div>
+                </div>
+
+                <!-- 2. 리뷰관리 탭 내용 -->
+                <div id="admin-sec-reviews" class="admin-section" style="display: none; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <h3 style="font-size: 16px; font-weight: 800; color: #4A2B20; margin: 0;">작성된 상품 리뷰</h3>
+                        <span style="font-size: 12px; color: #8D6E63; font-weight: 700;" id="admin-reviews-count">총 2명</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;" id="admin-reviews-list">
+                        <!-- 리뷰 리스트가 JS로 채워짐 -->
+                    </div>
+                </div>
+
+                <!-- 3. 상품등록 탭 내용 -->
+                <div id="admin-sec-register" class="admin-section" style="display: none; flex-direction: column; gap: 12px;">
+                    <h3 style="font-size: 16px; font-weight: 800; color: #4A2B20; margin-bottom: 4px;">신규 상품 정보 입력</h3>
+                    <div style="background-color: #FFF; border-radius: 20px; padding: 20px; box-shadow: 0 4px 16px rgba(62,39,35,0.02); display: flex; flex-direction: column; gap: 12px; border: 1px solid rgba(62,39,35,0.05);">
+                        <div>
+                            <label style="font-size: 12.5px; font-weight: 700; color: #5D4037; display: block; margin-bottom: 6px;">상품 분류</label>
+                            <select id="reg-prod-category" style="width: 100%; background-color: #FCF7EB; border: 1px solid rgba(62,39,35,0.15); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; outline: none; font-weight: 700; color: #4A2B20;">
+                                <option value="dough">도우 (빵 종류)</option>
+                                <option value="ingredient">속재료 (토핑)</option>
+                                <option value="beverage">음료 (커피/음료)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 12.5px; font-weight: 700; color: #5D4037; display: block; margin-bottom: 6px;">상품명</label>
+                            <input type="text" id="reg-prod-name" placeholder="예: 고구마 붕어빵" style="width: 100%; background-color: #FCF7EB; border: 1px solid rgba(62,39,35,0.15); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; outline: none; font-weight: 600; color: #3E2723;">
+                        </div>
+                        <div>
+                            <label style="font-size: 12.5px; font-weight: 700; color: #5D4037; display: block; margin-bottom: 6px;">상품 가격 (원)</label>
+                            <input type="number" id="reg-prod-price" placeholder="예: 2500" style="width: 100%; background-color: #FCF7EB; border: 1px solid rgba(62,39,35,0.15); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; outline: none; font-weight: 600; color: #3E2723;">
+                        </div>
+                        <div>
+                            <label style="font-size: 12.5px; font-weight: 700; color: #5D4037; display: block; margin-bottom: 6px;">상품 설명</label>
+                            <textarea id="reg-prod-desc" placeholder="예: 달콤하고 건강한 국산 황금 고구마 앙금이 꽉 들어찬 웰빙 붕어빵" style="width: 100%; height: 80px; background-color: #FCF7EB; border: 1px solid rgba(62,39,35,0.15); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; outline: none; font-family: inherit; resize: none; font-weight: 500; color: #3E2723; line-height: 1.4;"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="adminSubmitProduct()" style="padding: 14px; font-size: 15px; font-weight: 800; border-radius: 20px; margin-top: 10px; border: none; background-color: #D38E32; color: #FFF; box-shadow: 0 4px 12px rgba(211,142,50,0.25);">신규 상품 등록하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 성공 - 붕어짱</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --bg-phone-wall: repeating-linear-gradient(90deg, #FDECCB, #FDECCB 37px, #FFF7E4 37px, #FFF7E4 74px);
+            --app-main-amber: #D38E32;
+            --app-dark-brown: #4A2B20;
+            --text-main: #000000;
+            --text-muted: #7A7A7A;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            background-color: #F7B84B;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .phone-container {
+            width: 393px;
+            height: 852px;
+            background: var(--bg-phone-wall);
+            border: 12px solid var(--app-dark-brown);
+            border-radius: 48px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            padding: 44px 24px 20px 24px;
+        }
+
+        /* 상단 노치 */
+        .phone-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 28px;
+            background-color: var(--app-dark-brown);
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 18px;
+            z-index: 20;
+        }
+
+        .success-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+        }
+
+        .success-badge {
+            width: 80px;
+            height: 80px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+            margin-bottom: 24px;
+            animation: pop-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .success-badge span {
+            color: white;
+            font-size: 48px;
+        }
+
+        .success-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--app-dark-brown);
+            margin-bottom: 8px;
+        }
+
+        .success-subtitle {
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .receipt-card {
+            background-color: white;
+            border-radius: 24px;
+            padding: 24px;
+            width: 100%;
+            box-shadow: 0 8px 30px rgba(62, 39, 35, 0.05);
+            border: 1.5px solid rgba(74, 43, 32, 0.08);
+            margin-bottom: 35px;
+            text-align: left;
+            animation: fade-up 0.8s ease;
+        }
+
+        .receipt-card h3 {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--app-dark-brown);
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .receipt-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .receipt-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .receipt-value {
+            color: var(--text-main);
+            font-weight: 700;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .receipt-value.price {
+            color: var(--app-main-amber);
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .btn-home {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--app-main-amber);
+            color: white;
+            border: none;
+            border-radius: 32px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(211,142,50,0.2);
+            transition: all 0.2s;
+        }
+
+        .btn-home:active {
+            transform: scale(0.96);
+            box-shadow: 0 3px 8px rgba(211,142,50,0.15);
+        }
+
+        .home-indicator {
+            width: 140px;
+            height: 5px;
+            background-color: var(--app-dark-brown);
+            border-radius: 100px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        @keyframes pop-in {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fade-up {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="phone-container">
+        <div class="success-content">
+            <div class="success-badge">
+                <span class="material-icons-round">check</span>
+            </div>
+            <h1 class="success-title">주문 결제 완료!</h1>
+            <p class="success-subtitle">따끈따끈한 붕어빵을 구워 배송해 드릴게요. 🐟</p>
+
+            <div class="receipt-card">
+                <h3><span>결제 내역서</span> <span class="material-icons-round" style="color: var(--app-main-amber);">receipt_long</span></h3>
+                <div class="receipt-item">
+                    <span class="receipt-label">주문 상품</span>
+                    <span class="receipt-value" id="orderName">슈크림 붕어빵 외</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="receipt-label">주문 번호</span>
+                    <span class="receipt-value" id="orderId">-</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="receipt-label">결제 금액</span>
+                    <span class="receipt-value price" id="amount">₩0</span>
+                </div>
+                <div class="receipt-item" style="border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 12px; margin-top: 12px;">
+                    <span class="receipt-label">거래 키 (Toss)</span>
+                    <span class="receipt-value" id="paymentKey" style="font-size: 11px; font-family: monospace;">-</span>
+                </div>
+            </div>
+
+            <button class="btn-home" onclick="goHome()">메인 화면으로</button>
+        </div>
+        <div class="home-indicator"></div>
+    </div>
+
+    <script>
+        // URL의 쿼리 파라미터 파싱
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentKey = urlParams.get('paymentKey');
+        const orderId = urlParams.get('orderId');
+        const amount = urlParams.get('amount');
+
+        // 내역 표시
+        if (orderId) document.getElementById('orderId').textContent = orderId;
+        if (amount) document.getElementById('amount').textContent = '₩' + parseInt(amount, 10).toLocaleString();
+        if (paymentKey) document.getElementById('paymentKey').textContent = paymentKey;
+
+        // 로컬 스토리지 또는 세션에서 주문명 보관 여부 확인
+        const savedOrderName = sessionStorage.getItem('lastOrderName');
+        if (savedOrderName) {
+            document.getElementById('orderName').textContent = savedOrderName;
+        }
+
+        function goHome() {
+            // 결제 성공 후 장바구니 비우기 연출
+            sessionStorage.removeItem('lastOrderName');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+
+</html>

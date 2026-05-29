@@ -1,0 +1,739 @@
+/* 기본 초기화 및 변수 선언 */
+:root {
+    --bg-phone-wall: repeating-linear-gradient(90deg, #FDECCB, #FDECCB 37px, #FFF7E4 37px, #FFF7E4 74px); /* 스크린샷 내부의 은은한 세로 스트라이프 바탕색 반영 */
+    --app-main-amber: #D38E32; /* 스크린샷의 풍부하고 먹음직스러운 붕어빵 오렌지-카라멜 톤 반영 */
+    --app-dark-brown: #4A2B20; /* 폰 테두리 및 메인 타이틀용 딥 브라운 */
+    --input-bg: #FCF7EB;
+    --text-main: #000000;
+    --text-muted: #7A7A7A;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #F7B84B; /* 스크린샷 외부의 멋진 머스타드 골드 배경 일치 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* 스마트폰 외형 목업 구조 설정 */
+.phone-container {
+    width: 393px;
+    height: 852px; /* iPhone 14/15 Pro 스케일 기준 */
+    background: var(--bg-phone-wall);
+    border: 12px solid var(--app-dark-brown);
+    border-radius: 48px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+}
+
+/* 상단 아이폰 스타일 노치 추가 */
+.phone-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110px;
+    height: 28px;
+    background-color: var(--app-dark-brown);
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+    z-index: 20;
+}
+
+/* 상단 상태바 디자인 */
+.status-bar {
+    height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 24px 0 24px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #000;
+    z-index: 15;
+}
+.status-icons {
+    display: flex;
+    gap: 4px;
+}
+
+/* 화면(Screen) 기본 구조 및 SPA 라우팅 가시성 관리 */
+.screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; /* 플렉스 박스 내부 스크롤 활성화를 위한 필수 제약 추가 */
+    padding: 16px 20px;
+    overflow-y: auto;
+    position: relative;
+    padding-bottom: 90px; /* 하단 내비바 공간 확보 */
+    
+    /* 스크롤바 및 화살표 감추기 (IE, Edge, Firefox 대응) */
+    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+/* Webkit 기반 브라우저(Chrome, Safari, Opera, Edge) 스크롤바 및 화살표 제거 */
+.screen::-webkit-scrollbar {
+    display: none;
+}
+.screen.active {
+    display: flex;
+}
+.screen-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* 공통 헤더 컴포넌트 */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 48px;
+    margin-bottom: 12px;
+}
+.app-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.app-header h2.brand-text {
+    color: var(--app-main-amber);
+    font-size: 24px;
+}
+.click-icon {
+    cursor: pointer;
+    padding: 4px;
+}
+
+/* 하단 내비게이션 바 디자인 */
+.nav-bar-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background-color: rgba(252, 247, 235, 0.9);
+    border-top: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 5;
+}
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 11px;
+}
+.nav-item.active {
+    color: var(--app-main-amber);
+}
+.nav-item .material-icons-round {
+    font-size: 24px;
+    margin-bottom: 2px;
+}
+
+/* 공통 버튼 서식 */
+.btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 32px;
+    font-size: 18px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 10px rgba(62, 39, 35, 0.08);
+}
+.btn:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 4px rgba(62, 39, 35, 0.12);
+}
+.btn-primary {
+    background-color: var(--app-main-amber);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #BF7B24; /* 살짝 어두운 톤의 호버 피드백 */
+}
+.btn-secondary {
+    background-color: #FFFDF5;
+    color: #000000;
+    border: 1.5px solid #000000;
+    margin-top: 12px;
+}
+.btn-secondary:hover {
+    background-color: #F8F5EE;
+}
+.btn-link {
+    background: transparent;
+    color: var(--text-main);
+    font-size: 14px;
+    text-decoration: underline;
+    margin-top: 12px;
+    box-shadow: none;
+}
+.btn-group-bottom {
+    margin-top: auto;
+    margin-bottom: 24px; /* 여백을 넉넉히 주어 홈 인디케이터와 조화 */
+    padding: 0 4px;
+}
+
+/* 타이틀 및 폰트 서식 확장 */
+.main-step-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 4px;
+}
+.title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+.filter-badge {
+    border: 1.5px solid #000;
+    padding: 4px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.location-sub {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+.font-muted { color: var(--text-muted); }
+.font-amber { color: var(--app-main-amber); }
+.font-bold { font-weight: 700; }
+.text-center { text-align: center; }
+.size-sm { font-size: 13px; }
+.margin-top-auto { margin-top: auto; }
+.padd-top { padding-top: 10px; }
+
+/* SCREEN 1 디자인 요소 - 스크린샷과 100% 동일하게 일치 */
+.intro-content {
+    text-align: center;
+    margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+.main-logo-img {
+    width: 80px;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 5px;
+    animation: gentle-bob 4s ease-in-out infinite;
+}
+.app-title {
+    font-size: 48px;
+    font-weight: 900;
+    color: #000000;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+    line-height: 1;
+}
+.intro-graphic {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+.family-fish-img {
+    width: 170px;
+    height: auto;
+    object-fit: contain;
+    animation: float-around 5s ease-in-out infinite;
+}
+.intro-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #000000;
+    margin-top: 25px;
+    letter-spacing: -0.5px;
+}
+
+/* 마이크로 애니메이션 정의 */
+@keyframes gentle-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+@keyframes float-around {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(1deg); }
+}
+
+/* SCREEN 2 (회원가입) 입력 폼 디자인 */
+.center-logo { font-size: 48px; text-align: center; }
+.sub-intro-text { text-align: center; font-size: 15px; margin-bottom: 24px; font-weight: 500; }
+.input-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.input-field {
+    background-color: var(--input-bg);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.input-field input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    font-size: 14px;
+    outline: none;
+}
+.form-notice { text-align: center; font-size: 13px; color: #222; font-weight: 500; margin: 15px 0; line-height: 1.5; }
+
+/* 2x2 그리드 레이아웃 (도우/속재료 선택 공통) */
+.grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.menu-card {
+    background-color: transparent;
+    text-align: center;
+    cursor: pointer;
+}
+.fish-circle {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 64px;
+    margin-bottom: 8px;
+    box-shadow: inset 0 -4px 10px rgba(0,0,0,0.05);
+}
+.fish-circle-img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 8px;
+    box-shadow: 0 6px 12px rgba(62, 39, 35, 0.08);
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.menu-card:hover .fish-circle-img {
+    transform: scale(1.06);
+}
+/* 각 품목별 파스텔 백그라운드 색상 배정 */
+.drink-card-new:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(62, 39, 35, 0.12) !important;
+}
+.drink-card-new:active {
+    transform: translateY(0) scale(0.98);
+}
+.cart-item-img {
+    box-shadow: 0 4px 10px rgba(62, 39, 35, 0.08);
+    transition: transform 0.2s ease;
+}
+.cart-item:hover .cart-item-img {
+    transform: scale(1.04);
+}
+.detail-hero-img:hover {
+    transform: scale(1.04);
+    box-shadow: 0 16px 44px rgba(62, 39, 35, 0.14) !important;
+}
+.like-heart-btn:hover {
+    transform: scale(1.12);
+    box-shadow: 0 6px 16px rgba(62, 39, 35, 0.12) !important;
+}
+.like-heart-btn:active {
+    transform: scale(0.92);
+}
+.plain-bg { background-color: #FFF; }
+.choco-bg { background-color: #E2D1C3; }
+.matcha-bg { background-color: #D4E3D2; }
+.egg-bg { background-color: #FDF3CD; }
+
+.menu-card h4 { font-size: 16px; font-weight: 700; color: #000; }
+.menu-card p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* SCREEN 4 (상세정보) */
+.detail-hero {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.1;
+    background-color: #FCD96C;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 130px;
+    margin: 20px 0 10px 0;
+}
+.like-heart-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 30px;
+    background: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+.indicator-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 20px; }
+.indicator-dots .dot { width: 8px; height: 8px; background-color: #DDD; border-radius: 50%; }
+.indicator-dots .dot.active { background-color: var(--app-main-amber); width: 18px; border-radius: 4px; }
+.detail-info-box { padding: 0 4px; }
+.detail-title { font-size: 24px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
+.detail-price { font-size: 22px; font-weight: 700; color: #000; margin-bottom: 12px; }
+.detail-desc { font-size: 14px; color: #333; line-height: 1.6; font-weight: 400; }
+
+/* SCREEN 5 속재료 전용 서식 */
+.mini-logo { font-size: 28px; }
+.header-right-icons { display: flex; gap: 12px; }
+.search-bar {
+    background-color: #FFF;
+    border-radius: 20px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 24px 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.search-bar input { border: none; flex: 1; outline: none; font-size: 14px; }
+.fish-open-circle {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background-color: #FFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 54px;
+    margin-bottom: 8px;
+}
+.recommend-header { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.recommend-header h4 { font-size: 16px; font-weight: 700; }
+
+/* SCREEN 6 음료 페어링 카드 */
+.sub-section-title { font-size: 18px; font-weight: 700; }
+.drink-card {
+    background-color: #FFF;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.drink-info h4 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.drink-info p { font-size: 13px; line-height: 1.4; font-weight: 500; }
+.drink-img-mock { font-size: 48px; }
+
+/* SCREEN 7 장바구니 페이지 */
+.tabs-container { display: flex; background: rgba(0,0,0,0.05); border-radius: 12px; padding: 3px; margin-bottom: 16px; }
+.tab { flex: 1; text-align: center; padding: 8px; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; }
+.tab.active { background-color: #FFF; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.cart-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: auto; }
+.cart-item {
+    background-color: #FFF;
+    border-radius: 18px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.item-thumb { font-size: 36px; background-color: #FCD96C; width: 54px; height: 54px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 14px; }
+.item-details h4 { font-size: 15px; font-weight: 700; }
+.item-details p { font-size: 13px; margin: 2px 0; }
+.item-price { font-weight: 700; }
+.add-btn-circle { position: absolute; right: 16px; top: 35%; background-color: var(--app-main-amber); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 700; cursor: pointer; }
+.receipt-box { background-color: transparent; padding: 10px 4px; margin-top: 20px; }
+.receipt-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: var(--text-main); font-weight: 500; }
+.receipt-line { border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 8px 0; }
+.final-row { font-size: 16px; font-weight: 700; margin-top: 4px; }
+
+/* SCREEN 8 리뷰 스크린 */
+.rating-dashboard { display: flex; background: #FFF; border-radius: 20px; padding: 16px; gap: 16px; align-items: center; margin: 12px 0; }
+.big-score { text-align: center; flex: 1; }
+.big-score h2 { font-size: 42px; font-weight: 800; }
+.stars-row { font-size: 12px; margin-top: 2px; }
+.score-bars { flex: 1.5; display: flex; flex-direction: column; gap: 4px; }
+.bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+.bar-bg { flex: 1; height: 6px; background-color: #EEE; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; background-color: var(--app-main-amber); border-radius: 3px; }
+.user-review-card { background-color: #FFF; border-radius: 20px; padding: 16px; margin-bottom: 16px; }
+.review-user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.user-avatar { font-size: 24px; background: #EEE; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+.user-name { font-size: 14px; font-weight: 700; }
+.badge-verified { background: #EAD9C9; color: #8A6443; font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 600; margin-left: 4px; }
+.user-stars { margin-left: auto; font-size: 11px; }
+.review-text { font-size: 13px; line-height: 1.5; color: #333; margin-bottom: 10px; font-weight: 400; }
+.helpful-btn { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #CCC; padding: 4px 10px; border-radius: 12px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.photo-box { aspect-ratio: 1; background-color: #FFF; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 28px; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); overflow: hidden; }
+.photo-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* SCREEN 9 QR 코드 결제 */
+.qr-scan-title { font-size: 28px; font-weight: 800; margin-top: 12px; }
+.qr-scanner-frame {
+    background-color: #B5B5B5;
+    border-radius: 32px;
+    padding: 24px;
+    margin: 24px auto;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    box-shadow: inset 0 4px 10px rgba(0,0,0,0.15);
+}
+.camera-top-icon { color: white; font-size: 20px; margin-bottom: 8px; opacity: 0.8; }
+.qr-mock-code {
+    background: white;
+    width: 100%;
+    flex: 1;
+    border-radius: 16px;
+    position: relative;
+    border: 6px solid #111;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.qr-corner-fish { position: absolute; font-size: 20px; background-color: #FFF; border: 2px solid #000; border-radius: 4px; padding: 2px; }
+.qr-corner-fish:nth-child(1) { top: 4px; left: 4px; }
+.qr-corner-fish:nth-child(2) { top: 4px; right: 4px; }
+.qr-corner-fish:nth-child(3) { bottom: 4px; left: 4px; }
+.qr-center-badge { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.center-fish { font-size: 32px; background: #FFF; border-radius: 50%; padding: 4px; border: 1.5px solid var(--app-main-amber); }
+.inner-badge { font-size: 10px; font-weight: 700; color: #555; background: #F5EFE6; padding: 2px 6px; border-radius: 4px; }
+.laser-line { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background-color: #00FF66; box-shadow: 0 0 8px #00FF66; }
+
+.scan-status-alert { display: inline-flex; align-items: center; gap: 6px; color: #8A6443; font-weight: 700; font-size: 16px; margin-bottom: 16px; }
+.order-info-card { background-color: #FFF; border-radius: 14px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+.order-summary-card { background-color: #FFF; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; text-align: left; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+.summary-thumb { font-size: 28px; background-color: #FCD96C; width: 44px; height: 44px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 14px; }
+.summary-text-right h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+
+/* 하단 홈 인디케이터 바 */
+.home-indicator {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 5px;
+    background-color: #000;
+    border-radius: 3px;
+    z-index: 10;
+}
+
+/* ========================================================
+   도우(빵) 종류 및 속재료 선택 화면 특별 스타일 & 효과
+   ======================================================== */
+
+#scr-dough .fish-circle-wrap,
+#scr-ingredients .fish-circle-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 8px;
+}
+
+#scr-dough .select-check-badge,
+#scr-ingredients .select-check-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    color: var(--app-main-amber);
+    background-color: #FFF;
+    border-radius: 50%;
+    font-size: 26px;
+    display: none;
+    box-shadow: 0 4px 10px rgba(62, 39, 35, 0.15);
+    z-index: 2;
+}
+
+#scr-dough .menu-card.selected .select-check-badge,
+#scr-ingredients .menu-card.selected .select-check-badge {
+    display: block;
+    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#scr-dough .menu-card.selected .fish-circle-img,
+#scr-ingredients .menu-card.selected .fish-circle-img {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 4px var(--app-main-amber), 0 10px 24px rgba(211, 142, 50, 0.3);
+}
+
+#scr-dough .menu-card.selected h4,
+#scr-ingredients .menu-card.selected h4 {
+    color: var(--app-main-amber);
+    font-weight: 800;
+}
+
+@keyframes pop-in {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 속재료 선택 화면에서 하단 탭바 삭제에 대응하여 버튼 위치 및 스크롤 하단 여백 최적화 */
+#scr-ingredients {
+    padding-bottom: 110px !important;
+}
+
+#scr-ingredients .btn-group-dual {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    right: 24px;
+    z-index: 10;
+}
+
+/* 빵 종류 선택 화면(scr-dough) 스크롤 없이 한 화면에 표시 */
+#scr-dough {
+    padding-bottom: 0 !important;
+    overflow: visible;
+}
+#scr-dough .screen-content {
+    overflow: visible;
+}
+#scr-dough .location-sub {
+    margin-bottom: 10px;
+}
+#scr-dough .grid-2x2 {
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 8px; /* 스케일 및 박스 쉐도우 번짐이 전혀 잘리지 않도록 여백 확대 */
+}
+#scr-dough .menu-card h4 {
+    font-size: 14px;
+    margin-top: 4px;
+    margin-bottom: 1px;
+}
+#scr-dough .menu-card p {
+    font-size: 11px;
+    margin-top: 1px;
+}
+#scr-dough .fish-circle-img {
+    margin-bottom: 4px;
+}
+#scr-dough .fish-circle-wrap {
+    position: relative;
+}
+#scr-dough .btn-group-bottom {
+    margin-bottom: 8px;
+}
+#scr-dough .btn {
+    padding: 13px 16px;
+    font-size: 16px;
+}
+
+/* 장바구니 수량 조절 버튼 미세한 물리 햅틱 및 호버 효과 */
+.qty-btn {
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.qty-btn:active {
+    transform: scale(0.85) !important;
+}
+
+.qty-btn:hover {
+    filter: brightness(0.96);
+}
+
+/* ==========================================================================
+   토스페이먼츠 결제창 모바일 폰 프레임 밀착 고정 스타일
+   ========================================================================== */
+
+/* 토스페이먼츠 iframe이 .phone-container 내부로 들어왔을 때의 스타일 조율 */
+.phone-container iframe,
+.phone-container div[style*="z-index"][style*="fixed"] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 36px !important;
+    z-index: 999 !important;
+    overflow: hidden !important;
+}
+
+/* SDK가 생성한 고정 래퍼 div 내부에 삽입된 iframe의 크기를 100%로 강제하여 모바일 뷰포트 레이아웃 유도 */
+.phone-container div[style*="z-index"][style*="fixed"] iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 36px !important;
+}
+
+/* 폰 프레임 내부 노치 및 상태바가 iframe보다 위에 표시되도록 레이어 조절 */
+.phone-container::before {
+    z-index: 1001 !important;
+}
+.status-bar {
+    z-index: 1000 !important;
+}
+
+/* ========================================================
+   붕어빵 춤추는(회원리뷰 클릭) 특별 마이크로 애니메이션
+   ======================================================== */
+@keyframes fish-dance {
+    0% { transform: rotate(0deg) scale(1); }
+    15% { transform: rotate(14deg) translateY(-10px) scale(1.06); }
+    30% { transform: rotate(-14deg) translateY(4px) scale(0.94); }
+    45% { transform: rotate(10deg) translateY(-8px) scale(1.04); }
+    60% { transform: rotate(-10deg) translateY(2px) scale(0.96); }
+    75% { transform: rotate(6deg) translateY(-4px) scale(1.02); }
+    90% { transform: rotate(-4deg) translateY(1px); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+.fish-dancing {
+    animation: fish-dance 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* 관리자 콘솔 탭 전용 스타일 */
+.admin-tab.active {
+    background-color: #D38E32 !important;
+    color: #FFF !important;
+    box-shadow: 0 4px 12px rgba(211, 142, 50, 0.2) !important;
+}
