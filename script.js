@@ -27,6 +27,11 @@ function navigateTo(screenId) {
         if (screenHistory[screenHistory.length - 1] !== screenId) {
             screenHistory.push(screenId);
         }
+
+        // 장바구니 화면 진입 시 실시간 렌더링 호출
+        if (screenId === 'scr-cart') {
+            renderCart();
+        }
     }
 
     // 3. 하단 네비게이션 동기화 처리
@@ -92,6 +97,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 도우(빵) 선택 상태 관리 변수 (기본값: 'plain')
 let selectedDoughType = 'plain';
+
+// 실시간 장바구니 리스트 상태 관리 변수
+let cart = [];
+
+// 빵 및 속재료 데이터 한글 이름 및 이미지 매핑
+const DOUGH_MAP = {
+    'plain': { name: '플레인', img: 'plain_dough.png' },
+    'choco': { name: '초콜릿', img: 'choco_dough.png' },
+    'matcha': { name: '말차', img: 'matcha_dough.png' },
+    'egg': { name: '에그', img: 'egg_dough.png' }
+};
+
+const INGREDIENT_MAP = {
+    'custard': { name: '슈크림', img: 'custard_ingredient.png' },
+    'choco': { name: '초콜릿', img: 'choco_ingredient.png' },
+    'redbean': { name: '단팥', img: 'redbean_ingredient.png' },
+    'honey': { name: '꿀과 견과', img: 'honey_ingredient.png' }
+};
 
 /**
  * 빵 종류(도우)를 선택하는 함수
@@ -190,82 +213,198 @@ function goToBeverages() {
  * 선택된 도우와 속재료를 장바구니에 추가하고 장바구니 화면으로 이동
  */
 function addToCartAndNavigate() {
-    // 향후 실제 장바구니 리스트 갱신 로직 확장 가능
+    const doughKey = selectedDoughType || 'plain';
+    const ingredientKey = selectedIngredientType || 'custard';
+
+    const doughInfo = DOUGH_MAP[doughKey] || { name: doughKey, img: 'plain_dough.png' };
+    const ingredientInfo = INGREDIENT_MAP[ingredientKey] || { name: ingredientKey, img: 'custard_ingredient.png' };
+
+    // 중복 추가 방지: 이미 장바구니에 동일한 도우+속재료 조합이 있다면 수량만 증가시킴
+    const existing = cart.find(item => 
+        item.type === 'bungeo' && 
+        item.dough === doughKey && 
+        item.ingredient === ingredientKey
+    );
+
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({
+            id: 'bungeo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            type: 'bungeo',
+            dough: doughKey,
+            doughName: doughInfo.name,
+            ingredient: ingredientKey,
+            ingredientName: ingredientInfo.name,
+            price: 2500,
+            qty: 1,
+            image: doughInfo.img
+        });
+    }
+
     navigateTo('scr-cart');
 }
 
 /**
- * 장바구니 품목 수량을 가감하고 총 주문 합계를 실시간으로 재계산
- * @param {HTMLElement} element - 클릭된 버튼 요소
- * @param {number} delta - 변경할 수량 (-1 또는 1)
+ * 장바구니에 음료 품목을 추가하고 장바구니 화면으로 이동
  */
-function changeQty(element, delta) {
-    const container = element.closest('.quantity-controller');
-    const qtySpan = container.querySelector('.qty-num');
-    let currentQty = parseInt(qtySpan.textContent, 10);
-    
-    // 수량 변경 계산
-    let newQty = currentQty + delta;
-    
-    // 최소 수량 제약: 1개 미만일 때 자연스럽게 제거하도록 다이내믹 연출
-    if (newQty < 1) {
-        if (confirm('장바구니에서 이 상품을 삭제하시겠습니까?')) {
-            const cartItem = element.closest('.cart-item');
-            cartItem.style.opacity = '0';
-            cartItem.style.transform = 'scale(0.8)';
-            setTimeout(() => {
-                cartItem.remove();
-                updateCartTotals();
-            }, 300);
-        }
+function addDrinkToCartAndNavigate(name, price, img) {
+    const existing = cart.find(item => 
+        item.type === 'drink' && 
+        item.name === name
+    );
+
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({
+            id: 'drink_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            type: 'drink',
+            name: name,
+            price: price,
+            qty: 1,
+            image: img || 'iced_coffee.png'
+        });
+    }
+
+    navigateTo('scr-cart');
+}
+
+/**
+ * 장바구니 리스트를 동적으로 HTML 렌더링
+ */
+function renderCart() {
+    const container = document.getElementById('cart-items-container');
+    if (!container) return;
+
+    if (cart.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: #8D6E63; font-weight: 700; font-size: 15px;">
+                <span class="material-icons-round" style="font-size: 48px; color: #D3C3BE; margin-bottom: 12px; display: block;">shopping_cart</span>
+                장바구니가 비어 있습니다.
+            </div>
+        `;
+        updateCartTotals();
         return;
     }
-    
-    qtySpan.textContent = newQty;
-    
-    // 햅틱 느낌을 더하기 위한 수량 스케일 팝 애니메이션 효과
-    qtySpan.style.display = 'inline-block';
-    qtySpan.style.transform = 'scale(1.2)';
-    qtySpan.style.color = 'var(--app-main-amber)';
-    qtySpan.style.transition = 'transform 0.15s, color 0.15s';
-    setTimeout(() => {
-        qtySpan.style.transform = '';
-        qtySpan.style.color = '';
-    }, 150);
-    
-    // 합계 금액 실시간 업데이트
+
+    container.innerHTML = '';
+    cart.forEach((item) => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'cart-item';
+        itemEl.setAttribute('data-id', item.id);
+        itemEl.setAttribute('data-price', item.price);
+        itemEl.style.cssText = `
+            background-color: #FFF; 
+            border: 1px solid rgba(62,39,35,0.06); 
+            border-radius: 24px; 
+            padding: 16px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 18px; 
+            box-shadow: 0 4px 16px rgba(62,39,35,0.03); 
+            transition: transform 0.2s, opacity 0.2s;
+        `;
+
+        let img = item.image;
+        let title = '';
+        let subtitle = '';
+
+        if (item.type === 'bungeo') {
+            title = item.doughName;
+            subtitle = item.ingredientName;
+        } else {
+            title = item.name;
+            subtitle = '음료 페어링';
+        }
+
+        const subtotal = item.price * item.qty;
+
+        itemEl.innerHTML = `
+            <img class="cart-item-img" src="${img}" alt="${title}"
+                style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover;">
+            <div class="item-details" style="flex: 1;">
+                <h4 style="font-size: 17px; font-weight: 800; color: #000; margin: 0 0 2px 0; line-height: 1.25;">${title}</h4>
+                <p style="font-size: 17px; font-weight: 800; color: #8D6E63; margin: 0 0 6px 0; line-height: 1.25;">${subtitle}</p>
+                <p class="item-price" style="font-size: 17px; font-weight: 800; color: #D38E32; margin: 0;">₩${subtotal.toLocaleString()}</p>
+            </div>
+            <div class="quantity-controller"
+                style="display: flex; align-items: center; gap: 10px; background-color: #FFFDF5; border: 1px solid rgba(211,142,50,0.2); border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 6px rgba(62,39,35,0.03);">
+                <div class="qty-btn btn-minus" onclick="changeQtyById('${item.id}', -1)"
+                    style="background-color: #FFF; color: #D38E32; border: 1px solid rgba(211,142,50,0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;">
+                    -</div>
+                <span class="qty-num" style="font-size: 15px; font-weight: 800; color: #000; min-width: 16px; text-align: center;">${item.qty}</span>
+                <div class="qty-btn btn-plus" onclick="changeQtyById('${item.id}', 1)"
+                    style="background-color: #D38E32; color: #FFF; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(211,142,50,0.15); transition: all 0.2s; user-select: none;">
+                    +</div>
+            </div>
+        `;
+        container.appendChild(itemEl);
+    });
+
     updateCartTotals();
 }
 
-function updateCartTotals() {
-    const items = document.querySelectorAll('#scr-cart .cart-item');
-    let totalOrder = 0;
-    
-    items.forEach(item => {
-        const price = parseInt(item.getAttribute('data-price'), 10);
-        const qty = parseInt(item.querySelector('.qty-num').textContent, 10);
-        const subtotal = price * qty;
-        totalOrder += subtotal;
-        
-        // 개별 메뉴의 수량에 따른 합산 가격 표시 업데이트
-        const priceSpan = item.querySelector('.item-price');
-        if (priceSpan) {
-            priceSpan.textContent = `₩${subtotal.toLocaleString()}`;
+/**
+ * 장바구니 고유 ID 기반으로 수량을 조정하거나 삭제 처리
+ */
+function changeQtyById(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+
+    let newQty = item.qty + delta;
+    if (newQty < 1) {
+        if (confirm('장바구니에서 이 상품을 삭제하시겠습니까?')) {
+            const itemEl = document.querySelector(`.cart-item[data-id="${id}"]`);
+            if (itemEl) {
+                itemEl.style.opacity = '0';
+                itemEl.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    cart = cart.filter(i => i.id !== id);
+                    renderCart();
+                }, 300);
+            }
         }
-    });
+        return;
+    }
+
+    item.qty = newQty;
     
-    // 최종 총 결제금액 갱신 (배송비 없이 순수 합산 금액)
+    // 수량 변경 시 미세 스케일 햅틱 느낌 팝 애니메이션 추가 부여
+    const qtySpan = document.querySelector(`.cart-item[data-id="${id}"] .qty-num`);
+    if (qtySpan) {
+        qtySpan.style.display = 'inline-block';
+        qtySpan.style.transform = 'scale(1.2)';
+        qtySpan.style.color = 'var(--app-main-amber)';
+        qtySpan.style.transition = 'transform 0.15s, color 0.15s';
+        setTimeout(() => {
+            qtySpan.style.transform = '';
+            qtySpan.style.color = '';
+        }, 150);
+    }
+
+    renderCart();
+}
+
+/**
+ * 장바구니 전체 품목 수량과 총 결제액 갱신 및 뱃지 동기화
+ */
+function updateCartTotals() {
+    let totalOrder = 0;
+    let totalQty = 0;
+
+    cart.forEach(item => {
+        totalOrder += item.price * item.qty;
+        totalQty += item.qty;
+    });
+
+    // 최종 총 결제금액 갱신
     const finalPaySpan = document.getElementById('cart-final-pay');
     if (finalPaySpan) {
         finalPaySpan.textContent = `₩${totalOrder.toLocaleString()}`;
     }
-    
-    // 메인 헤더의 장바구니 아이콘 배지도 품목 총 수량에 맞춰 실시간 갱신
-    let totalQty = 0;
-    items.forEach(item => {
-        totalQty += parseInt(item.querySelector('.qty-num').textContent, 10);
-    });
-    
+
+    // 메인 헤더의 장바구니 아이콘 배지 실시간 동기화
     const badges = document.querySelectorAll('.cart-badge');
     badges.forEach(badge => {
         badge.textContent = totalQty;
@@ -1066,7 +1205,7 @@ function adminSubmitProduct() {
         if (bevContent) {
             const newCard = document.createElement('div');
             newCard.className = 'drink-card-new';
-            newCard.onclick = function() { navigateTo('scr-cart'); };
+            newCard.onclick = function() { addDrinkToCartAndNavigate(name, parseInt(price, 10), 'iced_coffee.png'); };
             newCard.style.position = 'relative';
             newCard.style.marginBottom = '16px';
             newCard.style.cursor = 'pointer';
