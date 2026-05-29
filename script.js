@@ -345,20 +345,38 @@ function renderCart() {
         let img = item.image;
         let title = '';
         let subtitle = '';
+        let graphicHtml = '';
 
         if (item.type === 'bungeo') {
             title = item.doughName;
             subtitle = item.ingredientName;
+            
+            const ingredientInfo = INGREDIENT_MAP[item.ingredient] || { img: 'custard_ingredient.png' };
+            graphicHtml = `
+                <div class="cart-item-graphic" style="position: relative; width: 72px; height: 72px; flex-shrink: 0; background-color: #FFFDF5; border-radius: 20px; border: 1.5px solid rgba(211,142,50,0.15); box-shadow: 0 4px 12px rgba(62,39,35,0.04); display: flex; align-items: center; justify-content: center; overflow: visible;">
+                    <!-- 메인 도우 (빵종류) 이미지 -->
+                    <img class="cart-item-dough-img" src="${img}" alt="${title}"
+                        style="width: 100%; height: 100%; border-radius: 20px; object-fit: contain; padding: 4px;">
+                    <!-- 서브 속재료 이미지 배지 (16가지 조합을 완벽히 표상하는 듀얼 배지 시스템) -->
+                    <div class="cart-item-ingredient-badge" 
+                        style="position: absolute; bottom: -6px; right: -6px; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #FFF; box-shadow: 0 4px 10px rgba(0,0,0,0.15); overflow: hidden; background-color: #FFF; z-index: 3; display: flex; align-items: center; justify-content: center;">
+                        <img src="${ingredientInfo.img}" alt="${subtitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+            `;
         } else {
             title = item.name;
             subtitle = '음료 페어링';
+            graphicHtml = `
+                <img class="cart-item-img" src="${img}" alt="${title}"
+                    style="width: 72px; height: 72px; border-radius: 20px; object-fit: cover; border: 1.5px solid rgba(211,142,50,0.1); box-shadow: 0 4px 12px rgba(62,39,35,0.04); flex-shrink: 0;">
+            `;
         }
 
         const subtotal = item.price * item.qty;
 
         itemEl.innerHTML = `
-            <img class="cart-item-img" src="${img}" alt="${title}"
-                style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover;">
+            ${graphicHtml}
             <div class="item-details" style="flex: 1;">
                 <h4 style="font-size: 17px; font-weight: 800; color: #000; margin: 0 0 2px 0; line-height: 1.25;">${title}</h4>
                 <p style="font-size: 17px; font-weight: 800; color: #8D6E63; margin: 0 0 6px 0; line-height: 1.25;">${subtitle}</p>
