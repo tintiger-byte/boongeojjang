@@ -123,6 +123,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // 지정된 화면이 있으면 해당 화면으로 바로 이동
         navigateTo(targetScreen);
     }
+
+    // 네이버 로그인 자동 트리거 파라미터 확인 (127.0.0.1 -> localhost 전환 대응)
+    const triggerNaver = urlParams.get('triggerNaver');
+    if (triggerNaver === 'true') {
+        const isReg = targetScreen === 'scr-register';
+        setTimeout(() => {
+            executeNaverOAuthDirectly(isReg);
+        }, 300);
+    }
 });
 
 /**
@@ -1262,98 +1271,21 @@ function checkNaverLoginCallback() {
     }
 }
 
-// 네이버 로그인 환경 및 API 에러 우회 선택 모달 다이얼로그
-function showNaverLoginSelector(isRegister) {
-    const modal = document.createElement('div');
-    modal.id = 'naver-addr-selector';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.6);
-        backdrop-filter: blur(4px);
-        z-index: 11000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
-    
-    modal.innerHTML = `
-        <div style="background-color: #FFF; width: 88%; max-width: 380px; border-radius: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.2); padding: 28px; font-family: inherit; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
-            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: #03C75A; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; box-shadow: 0 8px 20px rgba(3,199,90,0.3);">
-                <svg viewBox="0 0 24 24" style="width: 26px; height: 26px; fill: #FFFFFF;">
-                    <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
-                </svg>
-            </div>
-            <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0;">네이버 로그인 환경 선택</h3>
-            <p style="font-size: 13px; font-weight: 500; color: #8D6E63; margin: 0 0 24px 0; line-height: 1.6;">
-                네이버 콘솔에 등록된 URL과 브라우저 접속 주소가 다르면 API 에러가 발생합니다. 아래 환경 중 선택해 주세요.
-            </p>
-            
-            <button id="naver-opt-localhost" style="width: 100%; padding: 14px; background-color: #FDFBF7; border: 1.5px solid #D3C2B0; border-radius: 14px; font-size: 14px; font-weight: 700; color: #5D4037; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; text-align: center;">
-                🌐 localhost:8080 주소로 전환하여 진행
-            </button>
-            <button id="naver-opt-ip" style="width: 100%; padding: 14px; background-color: #FDFBF7; border: 1.5px solid #D3C2B0; border-radius: 14px; font-size: 14px; font-weight: 700; color: #5D4037; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; text-align: center;">
-                🌐 127.0.0.1:8080 주소로 전환하여 진행
-            </button>
-            <button id="naver-opt-mock" style="width: 100%; padding: 14px; background-color: #E8F5E9; border: 1.5px solid #81C784; border-radius: 14px; font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 12px rgba(46,125,50,0.15);">
-                💡 네이버 API 오류 우회 (즉시 로그인)
-            </button>
-            
-            <button id="naver-opt-close" style="width: 100%; padding: 10px; background: none; border: none; font-size: 14px; font-weight: 700; color: #BCAAA4; cursor: pointer;">
-                취소
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // 애니메이션 가동
-    setTimeout(() => {
-        modal.style.opacity = '1';
-        modal.firstElementChild.style.transform = 'scale(1)';
-    }, 10);
-    
-    const closeBtn = modal.querySelector('#naver-opt-close');
-    const localBtn = modal.querySelector('#naver-opt-localhost');
-    const ipBtn = modal.querySelector('#naver-opt-ip');
-    const mockBtn = modal.querySelector('#naver-opt-mock');
-    
-    const closeModal = () => {
-        modal.style.opacity = '0';
-        modal.firstElementChild.style.transform = 'scale(0.9)';
-        setTimeout(() => modal.remove(), 300);
-    };
-    
-    closeBtn.onclick = closeModal;
-    
-    localBtn.onclick = () => {
-        closeModal();
-        if (window.location.hostname !== 'localhost') {
-            const nextUrl = `http://localhost:8080/index.html?screen=${isRegister ? 'scr-register' : 'scr-login'}&v=14`;
-            alert("🔗 Naver API 인증을 위해 [localhost:8080] 주소로 즉시 안전하게 전환합니다.");
+// 네이버 로그인 주소 자동 정규화 및 다이렉트 로그인 실행 함수
+function handleNaverLoginDirectly(isRegister) {
+    const isWebServer = window.location.protocol.startsWith('http');
+    if (isWebServer) {
+        // 만약 현재 호스트가 127.0.0.1인 경우, 콘솔에 주로 등록된 localhost:8080으로 자동 전환하여 오류 방지
+        if (window.location.hostname === '127.0.0.1') {
+            const nextUrl = `http://localhost:8080/index.html?screen=${isRegister ? 'scr-register' : 'scr-login'}&triggerNaver=true&v=15`;
             window.location.href = nextUrl;
-        } else {
-            executeNaverOAuthDirectly(isRegister);
+            return;
         }
-    };
-    
-    ipBtn.onclick = () => {
-        closeModal();
-        if (window.location.hostname !== '127.0.0.1') {
-            const nextUrl = `http://127.0.0.1:8080/index.html?screen=${isRegister ? 'scr-register' : 'scr-login'}&v=14`;
-            alert("🔗 Naver API 인증을 위해 [127.0.0.1:8080] 주소로 즉시 안전하게 전환합니다.");
-            window.location.href = nextUrl;
-        } else {
-            executeNaverOAuthDirectly(isRegister);
-        }
-    };
-    
-    mockBtn.onclick = () => {
-        closeModal();
+        executeNaverOAuthDirectly(isRegister);
+    } else {
+        // 오프라인/파일 시스템 환경(file://)인 경우 모의 로그인 진행
         executeNaverMockFlow(isRegister);
-    };
+    }
 }
 
 function executeNaverOAuthDirectly(isRegister) {
@@ -1495,7 +1427,7 @@ function handleSnsLogin(provider) {
     }
 
     if (provider === 'naver') {
-        showNaverLoginSelector(false); // false = login
+        handleNaverLoginDirectly(false); // false = login
         return;
     }
 
@@ -1667,7 +1599,7 @@ function handleSnsRegister(provider) {
     }
 
     if (provider === 'naver') {
-        showNaverLoginSelector(true); // true = register
+        handleNaverLoginDirectly(true); // true = register
         return;
     }
 
