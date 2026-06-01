@@ -101,6 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 네이버 로그인 콜백 확인
     checkNaverLoginCallback();
+    // 카카오 로그인 콜백 확인 (팝업에서 리다이렉트 후 토큰 처리)
+    checkKakaoLoginCallback();
     
     // 카카오 로그인 SDK 초기화
     if (typeof Kakao !== 'undefined') {
@@ -139,15 +141,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (event.data && event.data.type === 'NAVER_LOGIN_SUCCESS') {
             const { userName, userPhone } = event.data;
-            
             currentUserRole = 'user';
             currentUserName = userName;
             currentUserPhone = userPhone;
-            
-            // 로딩 바텀시트/오버레이 제거
             removeNaverLoadingOverlay();
-            
             alert(`🎉 네이버 계정 정보 연동 완료!\n"${currentUserName}"님으로 정상적으로 로그인되었습니다.`);
+            updateSettingsUI();
+            navigateTo('scr-dough');
+        }
+
+        // 카카오 OAuth 팝업 완료 메시지 수신
+        if (event.data && event.data.type === 'KAKAO_LOGIN_SUCCESS') {
+            const { userName, userPhone, isRegister } = event.data;
+            currentUserRole = 'user';
+            currentUserName = userName;
+            currentUserPhone = userPhone;
+            const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
+            alert(`🎉 카카오 ${actionWord} 완료!\n"${currentUserName}"님, 붕어짱에 오신 것을 환영합니다! 🍊`);
             updateSettingsUI();
             navigateTo('scr-dough');
         }
@@ -1258,8 +1268,99 @@ function handleLogin() {
     }
 }
 
+// 카카오 로그인 실시간 연동 콜백 확인 함수 (팝업 창에서 토큰 수신 후 부모에 전달)
+function checkKakaoLoginCallback() {
+    const hash = window.location.hash;
+    if (!hash.includes('access_token')) return;
+
+    // URL 해시에서 access_token 추출
+    const params = new URLSearchParams(hash.replace('#', '?'));
+    const accessToken = params.get('access_token');
+    if (!accessToken) return;
+
+    const isRegister = sessionStorage.getItem('kakao_oauth_is_register') === 'true';
+
+    if (typeof Kakao !== 'undefined') {
+        // SDK로 토큰 설정 후 프로필 요청
+        if (!Kakao.isInitialized()) Kakao.init('23e243ab8d838a096da972987027a26f');
+        Kakao.Auth.setAccessToken(accessToken);
+
+        Kakao.API.request({
+            url: '/v2/user/me',
+            success: function(res) {
+                const nickname = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname)
+                    ? res.kakao_account.profile.nickname : '카카오 회원';
+                const mobile = (res.kakao_account && res.kakao_account.phone_number)
+                    ? res.kakao_account.phone_number : 'SNS_Kakao';
+
+                // URL 해시 정리
+                history.replaceState(null, null, window.location.pathname + window.location.search);
+
+                // 팝업에서 호출된 경우 부모 창에 메시지 전달 후 자동 닫힘
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'KAKAO_LOGIN_SUCCESS',
+                        userName: nickname,
+                        userPhone: mobile,
+                        isRegister: isRegister
+                    }, window.location.origin);
+                    window.close();
+                    return;
+                }
+
+                // 단독 페이지로 열린 경우 직접 처리
+                currentUserRole = 'user';
+                currentUserName = nickname;
+                currentUserPhone = mobile;
+                const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
+                alert(`🎉 카카오 ${actionWord} 완료!\n"${currentUserName}"님, 붕어짱에 오신 것을 환영합니다! 🍊`);
+                updateSettingsUI();
+                navigateTo('scr-dough');
+            },
+            fail: function(err) {
+                console.error('카카오 프로필 요청 실패:', err);
+                history.replaceState(null, null, window.location.pathname + window.location.search);
+                if (window.opener) { window.close(); }
+            }
+        });
+    }
+}
+
+/**
+ * 카카오 OAuth 2.0 팝업 창을 열고 로그인/가입 흐름을 시작합니다.
+ * @param {boolean} isRegister - true: 회원가입, false: 로그인
+ */
+function _openKakaoOAuthPopup(isRegister) {
+    sessionStorage.setItem('kakao_oauth_is_register', isRegister ? 'true' : 'false');
+
+    const clientId = '23e243ab8d838a096da972987027a26f';
+    const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}`;
+
+    const width = 480, height = 640;
+    const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - height) / 2);
+    const popup = window.open(
+        kakaoAuthUrl, 'kakaoLoginPopup',
+        `width=${width},height=${height},left=${left},top=${top},status=no,toolbar=no,menubar=no,location=no`
+    );
+
+    if (!popup || popup.closed) {
+        showCustomToast('팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 시도해주세요.', 'block');
+        return;
+    }
+
+    // 팝업 닫힘 감지 폴링
+    const pollTimer = setInterval(() => {
+        if (popup.closed) {
+            clearInterval(pollTimer);
+        }
+    }, 500);
+}
+
 // 네이버 로그인 실시간 연동 콜백 확인 함수
 function checkNaverLoginCallback() {
+
     if (window.location.hash.includes('access_token') || window.location.hash.includes('naver')) {
         if (typeof naver !== 'undefined' && naver.LoginWithNaverId) {
             const naverLogin = new naver.LoginWithNaverId({
@@ -1459,63 +1560,8 @@ function executeNaverMockFlow(isRegister) {
 // SNS 계정 연동 간편 로그인 처리
 function handleSnsLogin(provider) {
     if (provider === 'kakao') {
-        const isWebServer = window.location.protocol.startsWith('http');
-        if (isWebServer && typeof Kakao !== 'undefined') {
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background-color: rgba(255,253,245,0.96); z-index: 10000;
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                transition: opacity 0.3s; opacity: 0;
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="width: 80px; height: 80px; border-radius: 50%; background-color: #FEE500; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(254,229,0,0.4);">
-                    <svg viewBox="0 0 24 24" style="width: 36px; height: 36px; fill: #191919;">
-                        <path d="M12 3c-4.97 0-9 3.185-9 7.115 0 2.56 1.71 4.8 4.28 6.005-.17.585-.62 2.12-.71 2.455-.1.35.12.35.25.26.11-.07 1.83-1.24 2.56-1.745.86.24 1.77.375 2.62.375 4.97 0 9-3.185 9-7.115S16.97 3 12 3z"/>
-                    </svg>
-                </div>
-                <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">카카오 로그인 연결 중</h3>
-                <p style="font-size: 14px; font-weight: 700; color: #8D6E63; margin: 0 0 24px 0; font-family: inherit;">카카오 인증 창을 로딩하고 있습니다.</p>
-                <div class="sns-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(211,142,50,0.15); border-top: 3px solid #D38E32; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-            `;
-            document.body.appendChild(loadingOverlay);
-            setTimeout(() => { loadingOverlay.style.opacity = '1'; }, 10);
-            
-            Kakao.Auth.login({
-                success: function(authObj) {
-                    Kakao.API.request({
-                        url: '/v2/user/me',
-                        success: function(res) {
-                            loadingOverlay.style.opacity = '0';
-                            setTimeout(() => { loadingOverlay.remove(); }, 300);
-                            
-                            const nickname = res.kakao_account.profile.nickname || '카카오 회원';
-                            const mobile = res.kakao_account.phone_number || 'SNS_Kakao';
-                            
-                            currentUserRole = 'user';
-                            currentUserName = nickname;
-                            currentUserPhone = mobile;
-                            
-                            alert(`🎉 카카오 계정 정보 연동 완료!\n"${currentUserName}"님으로 정상적으로 로그인되었습니다.`);
-                            updateSettingsUI();
-                            navigateTo('scr-dough');
-                        },
-                        fail: function(error) {
-                            loadingOverlay.remove();
-                            alert("카카오 프로필 정보 획득에 실패했습니다.");
-                            console.error(error);
-                        }
-                    });
-                },
-                fail: function(err) {
-                    loadingOverlay.remove();
-                    alert("카카오 로그인 인증이 취소되었거나 실패했습니다.");
-                    console.error(err);
-                }
-            });
-            return;
-        }
+        _openKakaoOAuthPopup(false); // false = login
+        return;
     }
 
     if (provider === 'naver') {
@@ -1638,63 +1684,8 @@ function handleSnsLogin(provider) {
 // SNS 계정 연동 간편가입 처리
 function handleSnsRegister(provider) {
     if (provider === 'kakao') {
-        const isWebServer = window.location.protocol.startsWith('http');
-        if (isWebServer && typeof Kakao !== 'undefined') {
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background-color: rgba(255,253,245,0.96); z-index: 10000;
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                transition: opacity 0.3s; opacity: 0;
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="width: 80px; height: 80px; border-radius: 50%; background-color: #FEE500; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(254,229,0,0.4);">
-                    <svg viewBox="0 0 24 24" style="width: 36px; height: 36px; fill: #191919;">
-                        <path d="M12 3c-4.97 0-9 3.185-9 7.115 0 2.56 1.71 4.8 4.28 6.005-.17.585-.62 2.12-.71 2.455-.1.35.12.35.25.26.11-.07 1.83-1.24 2.56-1.745.86.24 1.77.375 2.62.375 4.97 0 9-3.185 9-7.115S16.97 3 12 3z"/>
-                    </svg>
-                </div>
-                <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">카카오 회원가입 연동 중</h3>
-                <p style="font-size: 14px; font-weight: 700; color: #8D6E63; margin: 0 0 24px 0; font-family: inherit;">간편가입을 위해 카카오 계정 연동을 준비하고 있습니다.</p>
-                <div class="sns-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(211,142,50,0.15); border-top: 3px solid #D38E32; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-            `;
-            document.body.appendChild(loadingOverlay);
-            setTimeout(() => { loadingOverlay.style.opacity = '1'; }, 10);
-            
-            Kakao.Auth.login({
-                success: function(authObj) {
-                    Kakao.API.request({
-                        url: '/v2/user/me',
-                        success: function(res) {
-                            loadingOverlay.style.opacity = '0';
-                            setTimeout(() => { loadingOverlay.remove(); }, 300);
-                            
-                            const nickname = res.kakao_account.profile.nickname || '카카오 회원';
-                            const mobile = res.kakao_account.phone_number || 'SNS_Kakao';
-                            
-                            currentUserRole = 'user';
-                            currentUserName = nickname;
-                            currentUserPhone = mobile;
-                            
-                            alert(`🎉 카카오 간편 회원가입 및 로그인 완료!\n"${currentUserName}"님, 환영합니다!`);
-                            updateSettingsUI();
-                            navigateTo('scr-dough');
-                        },
-                        fail: function(error) {
-                            loadingOverlay.remove();
-                            alert("카카오 프로필 정보 획득에 실패했습니다.");
-                            console.error(error);
-                        }
-                    });
-                },
-                fail: function(err) {
-                    loadingOverlay.remove();
-                    alert("카카오 회원가입 인증이 취소되었거나 실패했습니다.");
-                    console.error(err);
-                }
-            });
-            return;
-        }
+        _openKakaoOAuthPopup(true); // true = register
+        return;
     }
 
     if (provider === 'naver') {
