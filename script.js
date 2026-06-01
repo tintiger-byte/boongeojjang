@@ -2217,7 +2217,7 @@ function toggleNaverPw(iconEl) {
 
 /**
  * 네이버 인앱 로그인 화면에서 로그인 버튼 클릭 시 처리
- * 실제 환경에서는 네이버 OAuth PKCE 플로우로 연결, 데모에서는 모의 처리
+ * 실제 네이버 OAuth 팝업을 열어 인증하고, postMessage로 결과를 받아 세션을 완성합니다.
  */
 function submitNaverInAppLogin() {
     const idInput = document.getElementById('naver-inapp-id');
@@ -2238,27 +2238,74 @@ function submitNaverInAppLogin() {
         return;
     }
 
-    // 버튼을 로딩 상태로 전환
+    const isWebServer = window.location.protocol.startsWith('http');
+    if (!isWebServer) {
+        // 파일 시스템 환경 → 모의 처리
+        _naverInAppMockLogin(id, idInput, pwInput, submitBtn);
+        return;
+    }
+
+    // ── 실제 네이버 OAuth 팝업 개시 ──────────────────────────────────
+    const clientId = "Qx0NpItojaQW_NVuOzHg";
+    const callbackUrl = window.location.origin + window.location.pathname;
+    const state = Math.random().toString(36).substr(2, 9);
+    sessionStorage.setItem("naver_oauth_state", state);
+
+    const naverAuthUrl =
+        `https://nid.naver.com/oauth2.0/authorize?response_type=token` +
+        `&client_id=${clientId}` +
+        `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
+        `&state=${state}`;
+
+    const width = 480, height = 640;
+    const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - height) / 2);
+    const popup = window.open(
+        naverAuthUrl, 'naverOAuthPopup',
+        `width=${width},height=${height},left=${left},top=${top},status=no,toolbar=no,menubar=no,location=no`
+    );
+
+    // 팝업 차단 감지
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        showCustomToast('팝업이 차단되었습니다. 우회 로그인을 진행합니다.', 'info');
+        _naverInAppMockLogin(id, idInput, pwInput, submitBtn);
+        return;
+    }
+
+    // ── 버튼 로딩 상태로 전환 ─────────────────────────────────────────
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = '로그인 중...';
+        submitBtn.innerHTML = `
+            <span style="display:inline-flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" style="animation:spin 0.8s linear infinite;fill:#fff;">
+                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 14.03 20 13.07 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                </svg>
+                네이버 인증 중...
+            </span>`;
         submitBtn.style.backgroundColor = '#03C75A';
     }
 
-    const isRegister = sessionStorage.getItem('naver_login_is_register') === 'true';
-    const naverUserName = id.includes('@') ? id.split('@')[0] : id;
+    // ── 팝업 완료 감지 폴링 ───────────────────────────────────────────
+    const pollTimer = setInterval(() => {
+        if (popup.closed) {
+            clearInterval(pollTimer);
+            // 팝업이 닫혔는데 로그인이 안 됐다면 → 취소로 처리
+            if (submitBtn && submitBtn.disabled) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '로그인';
+                submitBtn.style.backgroundColor = id && pw ? '#03C75A' : '#D0D0D0';
+            }
+        }
+    }, 500);
 
-    // 실제 OAuth 시도 (로컬 http 서버 환경인 경우)
-    const isWebServer = window.location.protocol.startsWith('http');
-    if (isWebServer) {
-        // 1초 애니메이션 후 OAuth 진행 또는 모의 처리
-        setTimeout(() => {
-            // 실제 연동 환경이면 executeNaverOAuthDirectly로 전환 가능하지만,
-            // 인앱 경험을 최우선으로 모의 세션 생성으로 완전 처리
-            currentUserRole = 'user';
-            currentUserName = `${naverUserName}`;
-            currentUserPhone = `SNS_Naver_${id}`;
-
+    // ── postMessage 수신 (checkNaverLoginCallback이 popup 내에서 발송) ─
+    // DOMContentLoaded의 리스너가 NAVER_LOGIN_SUCCESS를 수신하면 처리됩니다.
+    // 추가로 scr-naver-login 전용 로컬 리스너를 달아 버튼 상태를 복구합니다.
+    const localListener = (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'NAVER_LOGIN_SUCCESS') {
+            clearInterval(pollTimer);
+            window.removeEventListener('message', localListener);
             // 입력 필드 초기화
             if (idInput) idInput.value = '';
             if (pwInput) pwInput.value = '';
@@ -2267,32 +2314,10 @@ function submitNaverInAppLogin() {
                 submitBtn.textContent = '로그인';
                 submitBtn.style.backgroundColor = '#D0D0D0';
             }
-
-            const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
-            alert(`🎉 네이버 ${actionWord} 완료!\n"${currentUserName}"님, 붕어짱에 오신 것을 환영합니다! 🐠`);
-            updateSettingsUI();
-            navigateTo('scr-dough');
-        }, 900);
-    } else {
-        // 파일 시스템 환경 모의 처리
-        setTimeout(() => {
-            currentUserRole = 'user';
-            currentUserName = naverUserName;
-            currentUserPhone = `SNS_Naver_${id}`;
-
-            if (idInput) idInput.value = '';
-            if (pwInput) pwInput.value = '';
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '로그인';
-                submitBtn.style.backgroundColor = '#D0D0D0';
-            }
-
-            alert(`🎉 네이버 로그인 완료!\n"${currentUserName}"님으로 로그인되었습니다. 🐠`);
-            updateSettingsUI();
-            navigateTo('scr-dough');
-        }, 900);
-    }
+            // 실제 로그인 처리는 DOMContentLoaded 등록 리스너가 수행
+        }
+    };
+    window.addEventListener('message', localListener);
 }
 
 /**
@@ -2310,4 +2335,37 @@ function onNaverInputChange() {
             btn.style.backgroundColor = '#D0D0D0';
         }
     }
+}
+
+/**
+ * 파일 시스템 환경 또는 팝업 차단 시 사용되는 네이버 인앱 모의 로그인 처리
+ * @private
+ */
+function _naverInAppMockLogin(id, idInput, pwInput, submitBtn) {
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '로그인 중...';
+        submitBtn.style.backgroundColor = '#03C75A';
+    }
+    const naverUserName = id.includes('@') ? id.split('@')[0] : id;
+    const isRegister = sessionStorage.getItem('naver_login_is_register') === 'true';
+
+    setTimeout(() => {
+        currentUserRole = 'user';
+        currentUserName = naverUserName;
+        currentUserPhone = `SNS_Naver_${id}`;
+
+        if (idInput) idInput.value = '';
+        if (pwInput) pwInput.value = '';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '로그인';
+            submitBtn.style.backgroundColor = '#D0D0D0';
+        }
+
+        const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
+        alert(`🎉 네이버 ${actionWord} 완료!\n"${currentUserName}"님, 붕어짱에 오신 것을 환영합니다! 🐠`);
+        updateSettingsUI();
+        navigateTo('scr-dough');
+    }, 900);
 }
