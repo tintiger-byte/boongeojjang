@@ -1334,8 +1334,18 @@ function _openKakaoOAuthPopup(isRegister) {
     sessionStorage.setItem('kakao_oauth_is_register', isRegister ? 'true' : 'false');
 
     const clientId = '23e243ab8d838a096da972987027a26f';
-    const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}`;
+
+    // ── Redirect URI: 카카오 개발자 콘솔에 등록된 것과 '완전히' 일치해야 합니다 ──
+    // 현재 서버 환경에 맞는 URI를 자동 선택 (127.0.0.1 → localhost 통일)
+    const origin = window.location.origin.replace('127.0.0.1', 'localhost');
+    const REDIRECT_URI = origin + '/index.html';
+    console.log('[카카오 OAuth] redirect_uri =', REDIRECT_URI, '\n👉 이 주소를 카카오 개발자 콘솔 → 카카오 로그인 → Redirect URI에 등록해 주세요.');
+
+    const kakaoAuthUrl =
+        `https://kauth.kakao.com/oauth/authorize` +
+        `?response_type=token` +
+        `&client_id=${clientId}` +
+        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
 
     const width = 480, height = 640;
     const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
@@ -1350,12 +1360,90 @@ function _openKakaoOAuthPopup(isRegister) {
         return;
     }
 
-    // 팝업 닫힘 감지 폴링
+    // ── 팝업 상태 폴링: KOE006 등 오류 감지 시 자동으로 모의 로그인 대체 ──
     const pollTimer = setInterval(() => {
+        try {
+            const popupUrl = popup.location && popup.location.href ? popup.location.href : '';
+            // 오류 파라미터 또는 KOE 에러 감지
+            if (popupUrl && (popupUrl.includes('error=') || popupUrl.includes('KOE'))) {
+                clearInterval(pollTimer);
+                popup.close();
+                _showKakaoOAuthError(isRegister);
+                return;
+            }
+        } catch(e) {
+            // cross-origin 접근 시 오류 무시 (카카오 도메인 → 정상)
+        }
+
         if (popup.closed) {
             clearInterval(pollTimer);
         }
-    }, 500);
+    }, 600);
+}
+
+/**
+ * 카카오 OAuth 설정 오류(KOE006 등) 발생 시 안내 및 모의 로그인 제공
+ */
+function _showKakaoOAuthError(isRegister) {
+    const phoneContainer = document.querySelector('.phone-container');
+    const existing = document.getElementById('kakao-error-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'kakao-error-overlay';
+    overlay.style.cssText = `
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,253,245,0.97); z-index: 10001;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        border-radius: 36px; padding: 24px; box-sizing: border-box; text-align: center;
+        opacity: 0; transition: opacity 0.3s;
+    `;
+    overlay.innerHTML = `
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: #FEE500; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(254,229,0,0.4);">
+            <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: #191919;">
+                <path d="M12 3c-4.97 0-9 3.185-9 7.115 0 2.56 1.71 4.8 4.28 6.005-.17.585-.62 2.12-.71 2.455-.1.35.12.35.25.26.11-.07 1.83-1.24 2.56-1.745.86.24 1.77.375 2.62.375 4.97 0 9-3.185 9-7.115S16.97 3 12 3z"/>
+            </svg>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 800; color: #3E2723; margin: 0 0 8px;">카카오 앱 설정 오류 (KOE006)</h3>
+        <p style="font-size: 12px; color: #8D6E63; line-height: 1.6; margin: 0 0 20px;">
+            카카오 개발자 콘솔에서<br>
+            <strong style="color:#D38E32;">Redirect URI</strong> 등록이 필요합니다.<br><br>
+            <code style="background:#F5F5F5; padding:3px 8px; border-radius:4px; font-size:11px; color:#333; display:block; margin:4px 0; word-break:break-all;">
+                http://localhost:8080/index.html
+            </code>
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+            <button id="kakao-mock-btn" style="width:100%; padding: 12px; background: #FEE500; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; color: #191919; cursor: pointer;">
+                🧪 테스트 카카오 로그인 (모의)
+            </button>
+            <button id="kakao-err-close-btn" style="width:100%; padding: 10px; background: none; border: none; font-size: 13px; color: #BCAAA4; cursor: pointer;">
+                닫기
+            </button>
+        </div>
+    `;
+
+    if (phoneContainer) phoneContainer.appendChild(overlay);
+    else document.body.appendChild(overlay);
+    setTimeout(() => { overlay.style.opacity = '1'; }, 10);
+
+    overlay.querySelector('#kakao-mock-btn').onclick = () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.remove();
+            // 모의 카카오 로그인 처리
+            const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
+            currentUserRole = 'user';
+            currentUserName = '카카오붕어짱';
+            currentUserPhone = 'SNS_Kakao';
+            alert(`🎉 카카오 ${actionWord} 완료!\n"카카오붕어짱"님, 붕어짱에 오신 것을 환영합니다! 🍊`);
+            updateSettingsUI();
+            navigateTo('scr-dough');
+        }, 300);
+    };
+    overlay.querySelector('#kakao-err-close-btn').onclick = () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    };
 }
 
 // 네이버 로그인 실시간 연동 콜백 확인 함수
