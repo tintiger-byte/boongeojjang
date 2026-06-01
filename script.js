@@ -1648,7 +1648,10 @@ function executeNaverMockFlow(isRegister) {
 // SNS 계정 연동 간편 로그인 처리
 function handleSnsLogin(provider) {
     if (provider === 'kakao') {
-        _openKakaoOAuthPopup(false); // false = login
+        sessionStorage.setItem('kakao_login_return_screen', 'scr-login');
+        sessionStorage.setItem('kakao_login_is_register', 'false');
+        navigateTo('scr-kakao-login');
+        setTimeout(() => { const el = document.getElementById('kakao-inapp-email'); if (el) el.focus(); }, 200);
         return;
     }
 
@@ -1772,7 +1775,10 @@ function handleSnsLogin(provider) {
 // SNS 계정 연동 간편가입 처리
 function handleSnsRegister(provider) {
     if (provider === 'kakao') {
-        _openKakaoOAuthPopup(true); // true = register
+        sessionStorage.setItem('kakao_login_return_screen', 'scr-register');
+        sessionStorage.setItem('kakao_login_is_register', 'true');
+        navigateTo('scr-kakao-login');
+        setTimeout(() => { const el = document.getElementById('kakao-inapp-email'); if (el) el.focus(); }, 200);
         return;
     }
 
@@ -2447,4 +2453,150 @@ function _naverInAppMockLogin(id, idInput, pwInput, submitBtn) {
         updateSettingsUI();
         navigateTo('scr-dough');
     }, 900);
+}
+
+
+/* ==========================================
+ * [인앱 카카오 로그인 화면 제어 함수]
+ * ==========================================*/
+
+function kakaoLoginBack() {
+    const emailEl = document.getElementById('kakao-inapp-email');
+    const pwEl = document.getElementById('kakao-inapp-pw');
+    if (emailEl) emailEl.value = '';
+    if (pwEl) pwEl.value = '';
+    // 버튼 opacity 초기화
+    const btn = document.getElementById('kakao-login-submit-btn');
+    if (btn) btn.style.opacity = '0.5';
+
+    const returnScreen = sessionStorage.getItem('kakao_login_return_screen') || 'scr-login';
+    navigateTo(returnScreen);
+}
+
+function toggleKakaoPw(iconEl) {
+    const pwInput = document.getElementById('kakao-inapp-pw');
+    if (!pwInput) return;
+    if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        iconEl.textContent = 'visibility';
+    } else {
+        pwInput.type = 'password';
+        iconEl.textContent = 'visibility_off';
+    }
+}
+
+function onKakaoInputChange() {
+    const email = (document.getElementById('kakao-inapp-email') || {}).value || '';
+    const pw = (document.getElementById('kakao-inapp-pw') || {}).value || '';
+    const btn = document.getElementById('kakao-login-submit-btn');
+    if (btn) {
+        btn.style.opacity = (email.trim() && pw.trim()) ? '1' : '0.5';
+    }
+}
+
+/**
+ * 카카오 인앱 로그인 화면에서 로그인 버튼 클릭 시 처리
+ * 1순위: Kakao.Auth.login() SDK 팝업 (개발자 콘솔 웹 플랫폼 등록 필요)
+ * 2순위: 모의 로그인 (이메일 아이디를 사용자명으로 사용)
+ */
+function submitKakaoInAppLogin() {
+    const emailInput = document.getElementById('kakao-inapp-email');
+    const pwInput = document.getElementById('kakao-inapp-pw');
+    const submitBtn = document.getElementById('kakao-login-submit-btn');
+
+    const email = emailInput ? emailInput.value.trim() : '';
+    const pw = pwInput ? pwInput.value.trim() : '';
+
+    if (!email) {
+        showCustomToast('카카오계정(이메일 또는 전화번호)을 입력해주세요.', 'person');
+        if (emailInput) emailInput.focus();
+        return;
+    }
+    if (!pw) {
+        showCustomToast('비밀번호를 입력해주세요.', 'lock');
+        if (pwInput) pwInput.focus();
+        return;
+    }
+
+    const isRegister = sessionStorage.getItem('kakao_login_is_register') === 'true';
+    const displayName = email.includes('@') ? email.split('@')[0] : email;
+
+    // 버튼 로딩 상태
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '로그인 중...';
+        submitBtn.style.opacity = '0.7';
+    }
+
+    const isWebServer = window.location.protocol.startsWith('http');
+
+    // ── 1순위: Kakao SDK 실제 로그인 시도 ────────────────────────────────
+    if (isWebServer && typeof Kakao !== 'undefined' && Kakao.isInitialized()) {
+        try {
+            Kakao.Auth.login({
+                success: function(authObj) {
+                    Kakao.API.request({
+                        url: '/v2/user/me',
+                        success: function(res) {
+                            const nickname = (res.kakao_account?.profile?.nickname) || displayName;
+                            const mobile = res.kakao_account?.phone_number || 'SNS_Kakao';
+
+                            if (emailInput) emailInput.value = '';
+                            if (pwInput) pwInput.value = '';
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = '카카오계정 로그인';
+                                submitBtn.style.opacity = '0.5';
+                            }
+
+                            currentUserRole = 'user';
+                            currentUserName = nickname;
+                            currentUserPhone = mobile;
+
+                            const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
+                            alert(`🎉 카카오 ${actionWord} 완료!\n"${currentUserName}"님, 붕어짱에 오신 것을 환영합니다! 🍊`);
+                            updateSettingsUI();
+                            navigateTo('scr-dough');
+                        },
+                        fail: function() {
+                            // API 실패 시 입력값 기반 모의 처리
+                            _kakaoMockLogin(displayName, isRegister, emailInput, pwInput, submitBtn);
+                        }
+                    });
+                },
+                fail: function(err) {
+                    // SDK 로그인 팝업 실패(KOE006 포함) → 모의 처리
+                    console.warn('카카오 SDK 로그인 실패, 모의 로그인으로 전환:', err);
+                    _kakaoMockLogin(displayName, isRegister, emailInput, pwInput, submitBtn);
+                }
+            });
+            return;
+        } catch(e) {
+            console.warn('카카오 Auth.login 예외:', e);
+        }
+    }
+
+    // ── 2순위: 모의 로그인 ─────────────────────────────────────────────
+    _kakaoMockLogin(displayName, isRegister, emailInput, pwInput, submitBtn);
+}
+
+function _kakaoMockLogin(displayName, isRegister, emailInput, pwInput, submitBtn) {
+    setTimeout(() => {
+        currentUserRole = 'user';
+        currentUserName = displayName;
+        currentUserPhone = 'SNS_Kakao';
+
+        if (emailInput) emailInput.value = '';
+        if (pwInput) pwInput.value = '';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '카카오계정 로그인';
+            submitBtn.style.opacity = '0.5';
+        }
+
+        const actionWord = isRegister ? '간편 회원가입 및 로그인' : '로그인';
+        alert(`🎉 카카오 ${actionWord} 완료!\n"${currentUserName}"님, 붕어짱에 오신 것을 환영합니다! 🍊`);
+        updateSettingsUI();
+        navigateTo('scr-dough');
+    }, 800);
 }

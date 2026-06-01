@@ -432,6 +432,81 @@
             </div>
         </div>
 
+        <!-- 카카오 인앱 로그인 화면 (폰 목업 안에서 완전히 구동) -->
+        <div id="scr-kakao-login" class="screen" style="overflow: hidden; background-color: #FAE100;">
+            <!-- 카카오 상단 헤더 -->
+            <div style="background-color: #FAE100; display: flex; align-items: center; padding: 0 16px; height: 52px; flex-shrink: 0; position: relative;">
+                <span class="material-icons-round" onclick="kakaoLoginBack()" style="color: #191919; font-size: 24px; cursor: pointer; position: absolute; left: 16px;">arrow_back</span>
+                <div style="flex: 1; text-align: center;">
+                    <svg viewBox="0 0 57 14" style="width: 64px; height: 16px; fill: #191919; display: inline-block; vertical-align: middle;">
+                        <text x="0" y="13" font-family="Arial" font-weight="800" font-size="14">kakao</text>
+                    </svg>
+                </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: #FAE100;">
+                <!-- 카카오 로고 영역 -->
+                <div style="text-align: center; padding: 30px 20px 20px;">
+                    <div style="width: 68px; height: 68px; border-radius: 50%; background-color: #FAE100; border: 3px solid #191919; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                        <svg viewBox="0 0 24 24" style="width: 36px; height: 36px; fill: #191919;">
+                            <path d="M12 3c-4.97 0-9 3.185-9 7.115 0 2.56 1.71 4.8 4.28 6.005-.17.585-.62 2.12-.71 2.455-.1.35.12.35.25.26.11-.07 1.83-1.24 2.56-1.745.86.24 1.77.375 2.62.375 4.97 0 9-3.185 9-7.115S16.97 3 12 3z"/>
+                        </svg>
+                    </div>
+                    <p style="font-size: 13.5px; color: #3C1E1E; font-weight: 600; margin: 0; font-family: 'Noto Sans KR', sans-serif;">
+                        <strong>붕어짱</strong>에 카카오 계정으로 로그인하세요.
+                    </p>
+                </div>
+
+                <!-- 로그인 폼 -->
+                <div style="background: #FFFFFF; border-radius: 16px 16px 0 0; flex: 1; padding: 24px 20px;">
+                    <div style="margin-bottom: 12px;">
+                        <input id="kakao-inapp-email" type="email" placeholder="카카오계정 (이메일 또는 전화번호)"
+                               style="width: 100%; padding: 14px 16px; border: 1px solid #E0E0E0; border-radius: 6px; font-size: 14.5px; color: #333; font-family: 'Noto Sans KR', sans-serif; outline: none; box-sizing: border-box;"
+                               oninput="onKakaoInputChange()"
+                               onfocus="this.style.borderColor='#FAE100'; this.style.boxShadow='0 0 0 2px rgba(250,225,0,0.4)'"
+                               onblur="this.style.borderColor='#E0E0E0'; this.style.boxShadow='none'">
+                    </div>
+                    <div style="margin-bottom: 20px; position: relative;">
+                        <input id="kakao-inapp-pw" type="password" placeholder="비밀번호"
+                               style="width: 100%; padding: 14px 44px 14px 16px; border: 1px solid #E0E0E0; border-radius: 6px; font-size: 14.5px; color: #333; font-family: 'Noto Sans KR', sans-serif; outline: none; box-sizing: border-box;"
+                               oninput="onKakaoInputChange()"
+                               onfocus="this.style.borderColor='#FAE100'; this.style.boxShadow='0 0 0 2px rgba(250,225,0,0.4)'"
+                               onblur="this.style.borderColor='#E0E0E0'; this.style.boxShadow='none'"
+                               onkeydown="if(event.key==='Enter') submitKakaoInAppLogin()">
+                        <span class="material-icons-round" onclick="toggleKakaoPw(this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #AAA; font-size: 20px; cursor: pointer;">visibility_off</span>
+                    </div>
+
+                    <!-- 로그인 버튼 -->
+                    <button id="kakao-login-submit-btn" onclick="submitKakaoInAppLogin()"
+                        style="width: 100%; padding: 14px 0; background-color: #FAE100; color: #191919; border: none; border-radius: 6px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: background-color 0.2s; margin-bottom: 12px; opacity: 0.5;">
+                        카카오계정 로그인
+                    </button>
+
+                    <!-- 하단 링크 -->
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 24px;">
+                        <a href="#" onclick="showCustomToast('아이디 찾기는 실제 카카오에서 진행해 주세요.', 'person'); return false;" style="font-size: 12.5px; color: #888; text-decoration: none;">아이디 찾기</a>
+                        <span style="color: #DDD;">|</span>
+                        <a href="#" onclick="showCustomToast('비밀번호 찾기는 실제 카카오에서 진행해 주세요.', 'lock'); return false;" style="font-size: 12.5px; color: #888; text-decoration: none;">비밀번호 찾기</a>
+                        <span style="color: #DDD;">|</span>
+                        <a href="#" onclick="showCustomToast('카카오 회원가입 후 이용해 주세요.', 'person_add'); return false;" style="font-size: 12.5px; color: #888; text-decoration: none;">회원가입</a>
+                    </div>
+
+                    <!-- 구분선 -->
+                    <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                        <div style="flex: 1; height: 1px; background: #EBEBEB;"></div>
+                        <span style="font-size: 12px; color: #CCC; padding: 0 12px;">또는</span>
+                        <div style="flex: 1; height: 1px; background: #EBEBEB;"></div>
+                    </div>
+
+                    <!-- QR 로그인 버튼 -->
+                    <button onclick="showCustomToast('QR 코드 로그인은 지원하지 않습니다.', 'qr_code')" 
+                        style="width: 100%; padding: 13px 0; background: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; font-size: 14px; font-weight: 600; color: #555; cursor: pointer; font-family: 'Noto Sans KR', sans-serif;">
+                        QR 코드 로그인
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- 네이버 인앱 로그인 화면 (폰 목업 안에서 완전히 구동) -->
         <div id="scr-naver-login" class="screen" style="overflow: hidden; background-color: #FFFFFF;">
             <!-- 네이버 상단 헤더 -->
@@ -1421,7 +1496,7 @@
         <div class="home-indicator"></div>
     </div>
 
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=22"></script>
 </body>
 
 </html>
