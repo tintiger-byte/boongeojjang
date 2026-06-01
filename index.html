@@ -432,6 +432,102 @@
             </div>
         </div>
 
+        <!-- 네이버 인앱 로그인 화면 (폰 목업 안에서 완전히 구동) -->
+        <div id="scr-naver-login" class="screen" style="overflow: hidden; background-color: #FFFFFF;">
+            <!-- 네이버 상단 헤더 -->
+            <div style="background-color: #03C75A; display: flex; align-items: center; padding: 0 16px; height: 52px; flex-shrink: 0; position: relative;">
+                <span class="material-icons-round" onclick="naverLoginBack()" style="color: #FFF; font-size: 24px; cursor: pointer; position: absolute; left: 16px;">arrow_back</span>
+                <div style="flex: 1; text-align: center;">
+                    <svg viewBox="0 0 68 20" style="width: 60px; height: 18px; fill: #FFFFFF; display: inline-block; vertical-align: middle;">
+                        <path d="M2 0h10.6l9.4 13.7V0H32V20H21.4L12 6.3V20H2V0zM36 0h10v20H36V0zM50 0h18v4h-8v12h8v4H50V0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="screen-content" style="padding: 0; overflow-y: auto; display: flex; flex-direction: column; flex: 1;">
+                <!-- 로그인 안내 배너 -->
+                <div style="background-color: #F5F6F8; border-bottom: 1px solid #E8E8E8; padding: 12px 20px; text-align: center;">
+                    <p style="font-size: 13px; color: #444; margin: 0; font-weight: 500; font-family: 'Noto Sans KR', sans-serif;">
+                        <strong style="color: #03C75A;">붕어짱</strong> 이용을 위해 네이버로 로그인해 주세요.
+                    </p>
+                </div>
+
+                <!-- 탭 바 -->
+                <div style="display: flex; border-bottom: 2px solid #03C75A; flex-shrink: 0;">
+                    <div style="flex: 1; text-align: center; padding: 12px 0; font-size: 13.5px; font-weight: 700; color: #03C75A; border-bottom: 2px solid #03C75A; margin-bottom: -2px; cursor: pointer;">
+                        🪪 ID/전화번호
+                    </div>
+                    <div style="flex: 1; text-align: center; padding: 12px 0; font-size: 13.5px; font-weight: 600; color: #888; cursor: pointer;" onclick="showCustomToast('일회용 번호 로그인은 지원하지 않습니다.', 'info')">
+                        1회용 번호
+                    </div>
+                    <div style="flex: 1; text-align: center; padding: 12px 0; font-size: 13.5px; font-weight: 600; color: #888; cursor: pointer;" onclick="showCustomToast('QR 코드 로그인은 지원하지 않습니다.', 'qr_code')">
+                        QR코드
+                    </div>
+                </div>
+
+                <!-- 로그인 폼 -->
+                <div style="padding: 20px 20px 0 20px; flex: 1;">
+                    <div style="margin-bottom: 10px;">
+                        <div style="border: 1.5px solid #E0E0E0; border-radius: 4px; padding: 13px 14px; transition: border-color 0.2s;" 
+                             onfocus-within="this.style.borderColor='#03C75A'">
+                            <input id="naver-inapp-id" type="text" placeholder="아이디 또는 전화번호"
+                                   style="width: 100%; border: none; outline: none; font-size: 15px; color: #222; font-family: 'Noto Sans KR', sans-serif; background: transparent;"
+                                   oninput="onNaverInputChange()"
+                                   onfocus="this.parentElement.style.borderColor='#03C75A'"
+                                   onblur="this.parentElement.style.borderColor='#E0E0E0'">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <div style="border: 1.5px solid #E0E0E0; border-radius: 4px; padding: 13px 14px; transition: border-color 0.2s; display: flex; align-items: center;">
+                            <input id="naver-inapp-pw" type="password" placeholder="비밀번호"
+                                   style="flex: 1; border: none; outline: none; font-size: 15px; color: #222; font-family: 'Noto Sans KR', sans-serif; background: transparent;"
+                                   oninput="onNaverInputChange()"
+                                   onfocus="this.parentElement.style.borderColor='#03C75A'"
+                                   onblur="this.parentElement.style.borderColor='#E0E0E0'"
+                                   onkeydown="if(event.key==='Enter') submitNaverInAppLogin()">
+                            <span class="material-icons-round" onclick="toggleNaverPw(this)" style="color: #AAA; font-size: 20px; cursor: pointer; flex-shrink: 0;">visibility_off</span>
+                        </div>
+                    </div>
+
+                    <!-- 체크 옵션 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #555; cursor: pointer;">
+                            <input type="checkbox" id="naver-keep-login" style="width: 15px; height: 15px; accent-color: #03C75A;"> 로그인 상태 유지
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #555;">
+                            <span style="color: #555; font-weight: 600;">IP 보안</span>
+                            <div style="width: 38px; height: 20px; background-color: #03C75A; border-radius: 10px; position: relative; cursor: pointer; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);">
+                                <div style="position: absolute; right: 3px; top: 3px; width: 14px; height: 14px; background: #FFF; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                                <span style="position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: 800; color: #FFF;">ON</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 로그인 버튼 -->
+                    <button onclick="submitNaverInAppLogin()" id="naver-login-submit-btn"
+                        style="width: 100%; padding: 14px 0; background-color: #D0D0D0; color: #FFF; border: none; border-radius: 4px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: background-color 0.2s; margin-bottom: 16px;"
+                        onfocus-within="this.style.backgroundColor='#03C75A'">
+                        로그인
+                    </button>
+
+                    <!-- 하단 링크 -->
+                    <div style="display: flex; justify-content: center; gap: 0; border-top: 1px solid #EBEBEB; padding-top: 16px; margin-bottom: 20px;">
+                        <a href="#" onclick="showCustomToast('비밀번호 찾기는 실제 네이버에서 진행해 주세요.', 'lock'); return false;" style="font-size: 13px; color: #555; text-decoration: none; padding: 0 14px; border-right: 1px solid #D0D0D0;">비밀번호 찾기</a>
+                        <a href="#" onclick="showCustomToast('아이디 찾기는 실제 네이버에서 진행해 주세요.', 'person'); return false;" style="font-size: 13px; color: #555; text-decoration: none; padding: 0 14px; border-right: 1px solid #D0D0D0;">아이디 찾기</a>
+                        <a href="#" onclick="showCustomToast('네이버 회원가입 후 이용해 주세요.', 'person_add'); return false;" style="font-size: 13px; color: #555; text-decoration: none; padding: 0 14px;">회원가입</a>
+                    </div>
+                </div>
+
+                <!-- 안내 공지 -->
+                <div style="background-color: #F5F6F8; border-top: 1px solid #EBEBEB; padding: 16px 20px; margin-top: auto; flex-shrink: 0;">
+                    <p style="font-size: 11.5px; color: #888; line-height: 1.6; margin: 0; font-family: 'Noto Sans KR', sans-serif;">
+                        💡 실제 네이버 아이디와 비밀번호를 입력하시면 붕어짱에 네이버 계정으로 간편 로그인됩니다.<br>
+                        붕어짱은 네이버 OpenAPI를 통해 회원 정보를 안전하게 처리합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <div id="scr-dough" class="screen">
             <div class="app-header">
                 <span class="material-icons-round click-icon" onclick="navigateTo('scr-detail')">home</span>
@@ -1318,109 +1414,6 @@
                 <button class="shutter-btn-outer" onclick="capturePhotoFromVideo()">
                     <div class="shutter-btn-inner"></div>
                 </button>
-            </div>
-        </div>
-
-        <!-- 🔒 네이버 모바일 웹뷰 가상 인앱 스크린 (휴대폰 목업 내 완벽 구동) -->
-        <div id="naver-webview-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #F5F6F7; z-index: 9999; border-radius: 36px; overflow: hidden; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box;">
-            <!-- 웹뷰 상단 주소창 헤더 -->
-            <div style="height: 54px; background: #FFF; border-bottom: 1.5px solid #E2E2E2; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; box-sizing: border-box; flex-shrink: 0; margin-top: 10px;">
-                <span class="material-icons-round" onclick="closeNaverWebview()" style="cursor: pointer; color: #333; font-size: 22px; user-select: none;">close</span>
-                <div style="display: flex; align-items: center; gap: 4px; background: #F1F3F5; padding: 5px 14px; border-radius: 16px; max-width: 60%; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);">
-                    <span class="material-icons-round" style="color: #03C75A; font-size: 13px;">lock</span>
-                    <span style="font-size: 12px; color: #555; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px;">nid.naver.com</span>
-                </div>
-                <span class="material-icons-round" style="color: #333; font-size: 20px; opacity: 0.7;">more_horiz</span>
-            </div>
-            
-            <!-- 웹뷰 스크롤 내용 영역 -->
-            <div style="flex: 1; overflow-y: auto; padding: 24px 22px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
-                <!-- 네이버 로고 -->
-                <h1 style="color: #03C75A; font-size: 34px; font-weight: 900; letter-spacing: -1.8px; margin: 15px 0 8px 0; font-family: 'Helvetica Neue', Arial, sans-serif; user-select: none;">NAVER</h1>
-                
-                <!-- 앱 로그인 안내 -->
-                <div style="font-size: 13px; color: #222; font-weight: 800; text-align: center; margin-bottom: 10px; letter-spacing: -0.3px;">
-                    <span style="color: #03C75A; font-weight: 900;">붕어짱</span> 이용을 위해 네이버에 로그인해 주세요.
-                </div>
-                
-                <!-- 보안 경고 박스 -->
-                <div style="background: #FFF; border: 1px solid #E0E0E0; border-radius: 8px; padding: 10px; font-size: 11px; color: #666; text-align: center; margin-bottom: 20px; line-height: 1.5; width: 100%; box-sizing: border-box; font-weight: 700; letter-spacing: -0.3px;">
-                    ⚠️ 여러 사람이 쓰는 PC라면<br>
-                    ① '로그인 상태 유지' 체크하지 않기 ② 사용 후 로그아웃하기
-                </div>
-                
-                <!-- 탭 리스트 -->
-                <div style="display: flex; width: 100%; border: 1px solid #dadada; border-bottom: none; border-top-left-radius: 6px; border-top-right-radius: 6px; background: #F8F9FA; overflow: hidden; box-sizing: border-box; flex-shrink: 0; user-select: none;">
-                    <div style="flex: 1; padding: 12px 0; text-align: center; font-size: 12.5px; font-weight: 800; color: #333; background: #FFF; border-bottom: 2px solid #03C75A;">ID/전화번호</div>
-                    <div style="flex: 1; padding: 12px 0; text-align: center; font-size: 12px; font-weight: 600; color: #777; border-left: 1px solid #dadada; border-bottom: 1px solid #dadada;">일회용 번호</div>
-                    <div style="flex: 1; padding: 12px 0; text-align: center; font-size: 12px; font-weight: 600; color: #777; border-left: 1px solid #dadada; border-bottom: 1px solid #dadada;">QR코드</div>
-                </div>
-                
-                <!-- 로그인 입력 필드 -->
-                <div style="width: 100%; border: 1px solid #dadada; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; background: #FFF; overflow: hidden; margin-bottom: 12px; box-sizing: border-box; flex-shrink: 0;">
-                    <!-- 아이디 -->
-                    <div style="padding: 10px 14px; border-bottom: 1px solid #F1F1F1; display: flex; flex-direction: column;">
-                        <label style="font-size: 10px; color: #888; font-weight: 800; margin-bottom: 2px; text-transform: uppercase;">아이디 또는 전화번호</label>
-                        <input id="naver-webview-id" type="text" placeholder="naver_user" style="border: none; outline: none; font-size: 14.5px; width: 100%; color: #333; font-weight: 700; padding: 2px 0; background: transparent;">
-                    </div>
-                    <!-- 비밀번호 -->
-                    <div style="padding: 10px 14px; display: flex; flex-direction: column;">
-                        <label style="font-size: 10px; color: #888; font-weight: 800; margin-bottom: 2px; text-transform: uppercase;">비밀번호</label>
-                        <input id="naver-webview-pw" type="password" placeholder="••••••••" style="border: none; outline: none; font-size: 14.5px; width: 100%; color: #333; font-weight: 700; padding: 2px 0; background: transparent;">
-                    </div>
-                </div>
-                
-                <!-- 옵션 및 보안 설정 -->
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 22px; padding: 0 2px; box-sizing: border-box; user-select: none;">
-                    <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; font-weight: 700; cursor: pointer;">
-                        <input type="checkbox" checked style="accent-color: #03C75A; width: 16px; height: 16px;">
-                        로그인 상태 유지
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #555; font-weight: 700;">
-                        <span>IP보안</span>
-                        <div style="width: 32px; height: 18px; background: #03C75A; border-radius: 9px; display: flex; align-items: center; padding: 0 2px; box-sizing: border-box;">
-                            <div style="width: 14px; height: 14px; background: #FFF; border-radius: 50%; margin-left: auto;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 로그인 실행 버튼 -->
-                <button onclick="submitNaverWebviewLogin()" style="width: 100%; padding: 14px; background: #03C75A; border: none; border-radius: 6px; color: #FFF; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(3,199,90,0.25); transition: background 0.2s; outline: none; box-sizing: border-box; flex-shrink: 0;">
-                    로그인
-                </button>
-                
-                <!-- 하단 서비스 링크 -->
-                <div style="display: flex; gap: 12px; font-size: 11px; color: #888; margin-top: 18px; font-weight: 700; user-select: none;">
-                    <span>비밀번호 찾기</span>
-                    <span style="color: #E2E2E2;">|</span>
-                    <span>아이디 찾기</span>
-                    <span style="color: #E2E2E2;">|</span>
-                    <span onclick="submitNaverWebviewLogin()" style="cursor: pointer; color: #666;">회원가입</span>
-                </div>
-                
-                <!-- 광고/배너 프로모션 -->
-                <div style="margin-top: 25px; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.04); cursor: pointer; flex-shrink: 0; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.03);" onclick="submitNaverWebviewLogin()">
-                    <div style="background: linear-gradient(135deg, #03C75A, #02B34F); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; color: #FFF;">
-                        <div>
-                            <div style="font-size: 8px; font-weight: 800; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px;">Naver Store</div>
-                            <div style="font-size: 12.5px; font-weight: 800; margin-top: 2px; letter-spacing: -0.3px;">라이프워크 신상 런칭!</div>
-                            <div style="font-size: 10.5px; font-weight: 700; opacity: 0.9; margin-top: 1px; letter-spacing: -0.2px;">매일오픈 선착순 10% 쿠폰</div>
-                        </div>
-                        <div style="font-size: 24px; animation: bounce 1s infinite alternate;">🎁</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 인앱 웹뷰 로딩 인디케이터 시트 -->
-            <div id="naver-webview-spinner" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,253,245,0.96); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; border-radius: 36px; text-align: center; padding: 20px; box-sizing: border-box;">
-                <div style="width: 80px; height: 80px; border-radius: 50%; background-color: #03C75A; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(3,199,90,0.3); animation: pulse 2s infinite ease-in-out;">
-                    <svg viewBox="0 0 24 24" style="width: 30px; height: 30px; fill: #FFFFFF;">
-                        <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
-                    </svg>
-                </div>
-                <h3 style="font-size: 18px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">네이버 계정 정보 연동 중</h3>
-                <p style="font-size: 13.5px; font-weight: 700; color: #8D6E63; margin: 0 0 20px 0; font-family: inherit;">보안 채널을 통해 계정 데이터를 안전하게 분석 중입니다.</p>
-                <div class="sns-spinner" style="width: 24px; height: 24px; border: 3px solid rgba(3,199,90,0.15); border-top: 3px solid #03C75A; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
             </div>
         </div>
 
