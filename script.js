@@ -1262,6 +1262,176 @@ function checkNaverLoginCallback() {
     }
 }
 
+// 네이버 로그인 환경 및 API 에러 우회 선택 모달 다이얼로그
+function showNaverLoginSelector(isRegister) {
+    const modal = document.createElement('div');
+    modal.id = 'naver-addr-selector';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 11000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background-color: #FFF; width: 88%; max-width: 380px; border-radius: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.2); padding: 28px; font-family: inherit; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: #03C75A; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; box-shadow: 0 8px 20px rgba(3,199,90,0.3);">
+                <svg viewBox="0 0 24 24" style="width: 26px; height: 26px; fill: #FFFFFF;">
+                    <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
+                </svg>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0;">네이버 로그인 환경 선택</h3>
+            <p style="font-size: 13px; font-weight: 500; color: #8D6E63; margin: 0 0 24px 0; line-height: 1.6;">
+                네이버 콘솔에 등록된 URL과 브라우저 접속 주소가 다르면 API 에러가 발생합니다. 아래 환경 중 선택해 주세요.
+            </p>
+            
+            <button id="naver-opt-localhost" style="width: 100%; padding: 14px; background-color: #FDFBF7; border: 1.5px solid #D3C2B0; border-radius: 14px; font-size: 14px; font-weight: 700; color: #5D4037; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                🌐 localhost:8080 주소로 전환하여 진행
+            </button>
+            <button id="naver-opt-ip" style="width: 100%; padding: 14px; background-color: #FDFBF7; border: 1.5px solid #D3C2B0; border-radius: 14px; font-size: 14px; font-weight: 700; color: #5D4037; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                🌐 127.0.0.1:8080 주소로 전환하여 진행
+            </button>
+            <button id="naver-opt-mock" style="width: 100%; padding: 14px; background-color: #E8F5E9; border: 1.5px solid #81C784; border-radius: 14px; font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 12px rgba(46,125,50,0.15);">
+                💡 네이버 API 오류 우회 (즉시 로그인)
+            </button>
+            
+            <button id="naver-opt-close" style="width: 100%; padding: 10px; background: none; border: none; font-size: 14px; font-weight: 700; color: #BCAAA4; cursor: pointer;">
+                취소
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 애니메이션 가동
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        modal.firstElementChild.style.transform = 'scale(1)';
+    }, 10);
+    
+    const closeBtn = modal.querySelector('#naver-opt-close');
+    const localBtn = modal.querySelector('#naver-opt-localhost');
+    const ipBtn = modal.querySelector('#naver-opt-ip');
+    const mockBtn = modal.querySelector('#naver-opt-mock');
+    
+    const closeModal = () => {
+        modal.style.opacity = '0';
+        modal.firstElementChild.style.transform = 'scale(0.9)';
+        setTimeout(() => modal.remove(), 300);
+    };
+    
+    closeBtn.onclick = closeModal;
+    
+    localBtn.onclick = () => {
+        closeModal();
+        if (window.location.hostname !== 'localhost') {
+            const nextUrl = `http://localhost:8080/index.html?screen=${isRegister ? 'scr-register' : 'scr-login'}&v=14`;
+            alert("🔗 Naver API 인증을 위해 [localhost:8080] 주소로 즉시 안전하게 전환합니다.");
+            window.location.href = nextUrl;
+        } else {
+            executeNaverOAuthDirectly(isRegister);
+        }
+    };
+    
+    ipBtn.onclick = () => {
+        closeModal();
+        if (window.location.hostname !== '127.0.0.1') {
+            const nextUrl = `http://127.0.0.1:8080/index.html?screen=${isRegister ? 'scr-register' : 'scr-login'}&v=14`;
+            alert("🔗 Naver API 인증을 위해 [127.0.0.1:8080] 주소로 즉시 안전하게 전환합니다.");
+            window.location.href = nextUrl;
+        } else {
+            executeNaverOAuthDirectly(isRegister);
+        }
+    };
+    
+    mockBtn.onclick = () => {
+        closeModal();
+        executeNaverMockFlow(isRegister);
+    };
+}
+
+function executeNaverOAuthDirectly(isRegister) {
+    const clientId = "Qx0NpItojaQW_NVuOzHg";
+    const callbackUrl = window.location.origin + window.location.pathname;
+    const state = Math.random().toString(36).substr(2, 9);
+    sessionStorage.setItem("naver_oauth_state", state);
+    
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
+    
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(255,253,245,0.96); z-index: 10000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.3s; opacity: 0;
+    `;
+    loadingOverlay.innerHTML = `
+        <div style="width: 80px; height: 80px; border-radius: 50%; background-color: #03C75A; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(3,199,90,0.4);">
+            <svg viewBox="0 0 24 24" style="width: 30px; height: 30px; fill: #FFFFFF;">
+                <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
+            </svg>
+        </div>
+        <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">네이버 로그인 창으로 안전하게 이동 중</h3>
+        <p style="font-size: 14px; font-weight: 700; color: #8D6E63; margin: 0 0 24px 0; font-family: inherit;">네이버 보안 로그인 페이지로 리다이렉트 중입니다.</p>
+        <div class="sns-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(211,142,50,0.15); border-top: 3px solid #D38E32; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+    `;
+    document.body.appendChild(loadingOverlay);
+    setTimeout(() => { loadingOverlay.style.opacity = '1'; }, 10);
+    
+    setTimeout(() => {
+        window.location.href = naverAuthUrl;
+    }, 800);
+}
+
+function executeNaverMockFlow(isRegister) {
+    const providerName = '네이버';
+    const userName = '네이버 붕어짱';
+    const themeColor = '#03C75A';
+    
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(255,253,245,0.96); z-index: 10000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.3s; opacity: 0;
+    `;
+    loadingOverlay.innerHTML = `
+        <div style="width: 80px; height: 80px; border-radius: 50%; background-color: ${themeColor}; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(3,199,90,0.4);">
+            <svg viewBox="0 0 24 24" style="width: 30px; height: 30px; fill: #FFFFFF;">
+                <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
+            </svg>
+        </div>
+        <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">${providerName} 우회 간편 연동 중</h3>
+        <p style="font-size: 14px; font-weight: 700; color: #8D6E63; margin: 0 0 24px 0; font-family: inherit;">콘솔 설정 오류를 우회하여 가상 계정 정보로 로그인 중입니다.</p>
+        <div class="sns-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(211,142,50,0.15); border-top: 3px solid #D38E32; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+    `;
+    document.body.appendChild(loadingOverlay);
+    setTimeout(() => { loadingOverlay.style.opacity = '1'; }, 10);
+    
+    setTimeout(() => {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.remove();
+            
+            currentUserRole = 'user';
+            currentUserName = userName;
+            currentUserPhone = `SNS_${providerName}`;
+            
+            alert(`🎉 ${userName}님으로 안전하게 간편 ${isRegister ? '가입 및 로그인' : '로그인'}되었습니다!`);
+            updateSettingsUI();
+            navigateTo('scr-dough');
+        }, 300);
+    }, 1200);
+}
+
 // SNS 계정 연동 간편 로그인 처리
 function handleSnsLogin(provider) {
     if (provider === 'kakao') {
@@ -1325,41 +1495,8 @@ function handleSnsLogin(provider) {
     }
 
     if (provider === 'naver') {
-        const isWebServer = window.location.protocol.startsWith('http');
-        if (isWebServer) {
-            const clientId = "Qx0NpItojaQW_NVuOzHg";
-            const callbackUrl = window.location.origin + window.location.pathname;
-            const state = Math.random().toString(36).substr(2, 9);
-            sessionStorage.setItem("naver_oauth_state", state);
-            
-            const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
-            
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background-color: rgba(255,253,245,0.96); z-index: 10000;
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                transition: opacity 0.3s; opacity: 0;
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="width: 80px; height: 80px; border-radius: 50%; background-color: #03C75A; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(3,199,90,0.4);">
-                    <svg viewBox="0 0 24 24" style="width: 30px; height: 30px; fill: #FFFFFF;">
-                        <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
-                    </svg>
-                </div>
-                <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">네이버 로그인 창으로 안전하게 이동 중</h3>
-                <p style="font-size: 14px; font-weight: 700; color: #8D6E63; margin: 0 0 24px 0; font-family: inherit;">네이버 보안 로그인 페이지로 리다이렉트 중입니다.</p>
-                <div class="sns-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(211,142,50,0.15); border-top: 3px solid #D38E32; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-            `;
-            document.body.appendChild(loadingOverlay);
-            setTimeout(() => { loadingOverlay.style.opacity = '1'; }, 10);
-            
-            setTimeout(() => {
-                window.location.href = naverAuthUrl;
-            }, 800);
-            return;
-        }
+        showNaverLoginSelector(false); // false = login
+        return;
     }
 
     let providerName = '';
@@ -1530,41 +1667,8 @@ function handleSnsRegister(provider) {
     }
 
     if (provider === 'naver') {
-        const isWebServer = window.location.protocol.startsWith('http');
-        if (isWebServer) {
-            const clientId = "Qx0NpItojaQW_NVuOzHg";
-            const callbackUrl = window.location.origin + window.location.pathname;
-            const state = Math.random().toString(36).substr(2, 9);
-            sessionStorage.setItem("naver_oauth_state", state);
-            
-            const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
-            
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background-color: rgba(255,253,245,0.96); z-index: 10000;
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                transition: opacity 0.3s; opacity: 0;
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="width: 80px; height: 80px; border-radius: 50%; background-color: #03C75A; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(3,199,90,0.4);">
-                    <svg viewBox="0 0 24 24" style="width: 30px; height: 30px; fill: #FFFFFF;">
-                        <path d="M16.2 3H21v18h-4.8l-8.4-12.3V21H3V3h4.8l8.4 12.3V3z"/>
-                    </svg>
-                </div>
-                <h3 style="font-size: 20px; font-weight: 800; color: #3E2723; margin: 0 0 8px 0; font-family: inherit;">네이버 회원가입 연동 중</h3>
-                <p style="font-size: 14px; font-weight: 700; color: #8D6E63; margin: 0 0 24px 0; font-family: inherit;">네이버 간편가입 페이지로 안전하게 이동 중입니다.</p>
-                <div class="sns-spinner" style="width: 28px; height: 28px; border: 3px solid rgba(211,142,50,0.15); border-top: 3px solid #D38E32; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-            `;
-            document.body.appendChild(loadingOverlay);
-            setTimeout(() => { loadingOverlay.style.opacity = '1'; }, 10);
-            
-            setTimeout(() => {
-                window.location.href = naverAuthUrl;
-            }, 800);
-            return;
-        }
+        showNaverLoginSelector(true); // true = register
+        return;
     }
 
     let providerName = '';
