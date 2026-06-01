@@ -398,10 +398,10 @@ function renderCart() {
             background-color: #FFF; 
             border: 1px solid rgba(62,39,35,0.06); 
             border-radius: 24px; 
-            padding: 16px 20px; 
+            padding: 12px 10px; 
             display: flex; 
             align-items: center; 
-            gap: 18px; 
+            gap: 8px; 
             box-shadow: 0 4px 16px rgba(62,39,35,0.03); 
             transition: transform 0.2s, opacity 0.2s;
         `;
@@ -417,43 +417,53 @@ function renderCart() {
             
             const ingredientInfo = INGREDIENT_MAP[item.ingredient] || { img: 'custard_ingredient.png' };
             graphicHtml = `
-                <div class="cart-item-graphic" style="position: relative; width: 72px; height: 72px; flex-shrink: 0; background-color: #FFFDF5; border-radius: 20px; border: 1.5px solid rgba(211,142,50,0.15); box-shadow: 0 4px 12px rgba(62,39,35,0.04); display: flex; align-items: center; justify-content: center; overflow: visible;">
+                <div class="cart-item-graphic" style="position: relative; width: 56px; height: 56px; flex-shrink: 0; background-color: #FFFDF5; border-radius: 16px; border: 1.5px solid rgba(211,142,50,0.15); box-shadow: 0 4px 12px rgba(62,39,35,0.04); display: flex; align-items: center; justify-content: center; overflow: visible;">
                     <!-- 메인 도우 (빵종류) 이미지 -->
                     <img class="cart-item-dough-img" src="${img}" alt="${title}"
-                        style="width: 100%; height: 100%; border-radius: 20px; object-fit: contain; padding: 4px;">
+                        style="width: 100%; height: 100%; border-radius: 16px; object-fit: contain; padding: 4px;">
                     <!-- 서브 속재료 이미지 배지 (16가지 조합을 완벽히 표상하는 듀얼 배지 시스템) -->
                     <div class="cart-item-ingredient-badge" 
-                        style="position: absolute; bottom: -6px; right: -6px; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #FFF; box-shadow: 0 4px 10px rgba(0,0,0,0.15); overflow: hidden; background-color: #FFF; z-index: 3; display: flex; align-items: center; justify-content: center;">
+                        style="position: absolute; bottom: -4px; right: -4px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #FFF; box-shadow: 0 4px 10px rgba(0,0,0,0.15); overflow: hidden; background-color: #FFF; z-index: 3; display: flex; align-items: center; justify-content: center;">
                         <img src="${ingredientInfo.img}" alt="${subtitle}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                 </div>
             `;
         } else {
             title = item.name;
-            subtitle = '음료 페어링';
+            if (title.includes('커피')) {
+                subtitle = '';
+                if (title.includes('아이스')) {
+                    img = 'iced_coffee_1.png';
+                } else if (title.includes('뜨거운') || title.includes('따뜻한')) {
+                    img = 'hot_coffee_1.png';
+                }
+            } else {
+                subtitle = '음료 페어링';
+            }
             graphicHtml = `
                 <img class="cart-item-img" src="${img}" alt="${title}"
-                    style="width: 72px; height: 72px; border-radius: 20px; object-fit: cover; border: 1.5px solid rgba(211,142,50,0.1); box-shadow: 0 4px 12px rgba(62,39,35,0.04); flex-shrink: 0;">
+                    style="width: 56px; height: 56px; border-radius: 16px; object-fit: cover; border: 1.5px solid rgba(211,142,50,0.1); box-shadow: 0 4px 12px rgba(62,39,35,0.04); flex-shrink: 0;">
             `;
         }
 
         const subtotal = item.price * item.qty;
+        const subtitleHtml = subtitle ? `<p style="font-size: 13px; font-weight: 800; color: #8D6E63; margin: 0 0 2px 0; line-height: 1.2; white-space: nowrap;">${subtitle}</p>` : '';
 
         itemEl.innerHTML = `
             ${graphicHtml}
-            <div class="item-details" style="flex: 1;">
-                <h4 style="font-size: 17px; font-weight: 800; color: #000; margin: 0 0 2px 0; line-height: 1.25;">${title}</h4>
-                <p style="font-size: 17px; font-weight: 800; color: #8D6E63; margin: 0 0 6px 0; line-height: 1.25;">${subtitle}</p>
-                <p class="item-price" style="font-size: 17px; font-weight: 800; color: #D38E32; margin: 0;">₩${subtotal.toLocaleString()}</p>
+            <div class="item-details" style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                <h4 style="font-size: 15px; font-weight: 800; color: #000; margin: 0 0 2px 0; line-height: 1.2; white-space: nowrap;">${title}</h4>
+                ${subtitleHtml}
+                <p class="item-price" style="font-size: 15px; font-weight: 800; color: #D38E32; margin: 0; line-height: 1.2;">₩${subtotal.toLocaleString()}</p>
             </div>
             <div class="quantity-controller"
-                style="display: flex; align-items: center; gap: 10px; background-color: #FFFDF5; border: 1px solid rgba(211,142,50,0.2); border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 6px rgba(62,39,35,0.03);">
+                style="display: flex; align-items: center; gap: 8px; background-color: #FFFDF5; border: 1px solid rgba(211,142,50,0.2); border-radius: 16px; padding: 3px 6px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(62,39,35,0.03);">
                 <div class="qty-btn btn-minus" onclick="changeQtyById('${item.id}', -1)"
-                    style="background-color: #FFF; color: #D38E32; border: 1px solid rgba(211,142,50,0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;">
+                    style="background-color: #FFF; color: #D38E32; border: 1px solid rgba(211,142,50,0.2); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;">
                     -</div>
-                <span class="qty-num" style="font-size: 15px; font-weight: 800; color: #000; min-width: 16px; text-align: center;">${item.qty}</span>
+                <span class="qty-num" style="font-size: 14px; font-weight: 800; color: #000; min-width: 20px; text-align: center;">${item.qty}</span>
                 <div class="qty-btn btn-plus" onclick="changeQtyById('${item.id}', 1)"
-                    style="background-color: #D38E32; color: #FFF; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(211,142,50,0.15); transition: all 0.2s; user-select: none;">
+                    style="background-color: #D38E32; color: #FFF; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(211,142,50,0.15); transition: all 0.2s; user-select: none;">
                     +</div>
             </div>
         `;
@@ -889,11 +899,154 @@ function setRating(score) {
     });
 }
 
+// 실시간 인앱 카메라 스트림 추적 변수
+let cameraStream = null;
+
 /**
- * 리뷰 작성 포토 업로드 트리거
+ * 리뷰 작성 포토 업로드 트리거 - 카메라/앨범 바텀시트 열기
  */
 function triggerPhotoUpload() {
-    document.getElementById('review-photo-file').click();
+    const sheet = document.getElementById('photo-choice-bottom-sheet');
+    if (sheet) {
+        sheet.style.display = 'flex';
+        void sheet.offsetHeight; // 강제 리플로우
+        sheet.classList.add('active');
+    }
+}
+
+/**
+ * 포토 선택 바텀시트 닫기
+ */
+function closePhotoChoice() {
+    const sheet = document.getElementById('photo-choice-bottom-sheet');
+    if (sheet) {
+        sheet.classList.remove('active');
+        setTimeout(() => {
+            if (!sheet.classList.contains('active')) {
+                sheet.style.display = 'none';
+            }
+        }, 300);
+    }
+}
+
+/**
+ * 카메라 또는 앨범 선택 실행
+ */
+function selectPhotoFrom(source) {
+    closePhotoChoice();
+    if (source === 'camera') {
+        // 인앱 실시간 카메라 가동 시도
+        startInAppCamera();
+    } else if (source === 'album') {
+        const albInput = document.getElementById('review-photo-file-album');
+        if (albInput) albInput.click();
+    }
+}
+
+/**
+ * 실시간 인앱 카메라 시작 함수 (WebRTC getUserMedia 연동)
+ */
+async function startInAppCamera() {
+    const container = document.getElementById('in-app-camera-container');
+    const video = document.getElementById('camera-video');
+    
+    if (!container || !video) {
+        fallbackToCameraInput();
+        return;
+    }
+
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("getUserMedia API not supported");
+        }
+
+        const constraints = {
+            video: {
+                facingMode: 'environment', // 후면 카메라 우선
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = cameraStream;
+        
+        container.style.display = 'flex';
+    } catch (error) {
+        console.warn("실시간 인앱 카메라 연결 실패, 표준 파일 인풋으로 우회합니다:", error);
+        fallbackToCameraInput();
+    }
+}
+
+/**
+ * getUserMedia가 지원되지 않거나 카메라 실패 시 표준 디바이스 카메라 앱 호출 폴백
+ */
+function fallbackToCameraInput() {
+    showCustomToast('표준 카메라 인풋을 활성화합니다.', 'photo_camera');
+    const camInput = document.getElementById('review-photo-file-camera');
+    if (camInput) camInput.click();
+}
+
+/**
+ * 실시간 인앱 카메라 중지 및 스트림 해제
+ */
+function stopInAppCamera() {
+    const container = document.getElementById('in-app-camera-container');
+    const video = document.getElementById('camera-video');
+    
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    
+    if (video) {
+        video.srcObject = null;
+    }
+    
+    if (container) {
+        container.style.display = 'none';
+    }
+}
+
+/**
+ * 실시간 비디오 프레임을 캔버스로 따서 사진으로 등록 (셔터 플래시 효과 포함)
+ */
+function capturePhotoFromVideo() {
+    const video = document.getElementById('camera-video');
+    const container = document.getElementById('in-app-camera-container');
+    const flash = document.getElementById('camera-flash');
+    
+    if (!video || !container) return;
+    
+    // 셔터 플래시 애니메이션 실행
+    if (flash) {
+        flash.classList.remove('flash-active');
+        void flash.offsetWidth; // 강제 리플로우
+        flash.classList.add('flash-active');
+    }
+    
+    // 비디오 현재 시각의 스냅샷 캡처
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        
+        // 프리뷰 영역 표시 처리
+        document.getElementById('photo-preview-img').src = dataUrl;
+        document.getElementById('photo-preview-container').style.display = 'block';
+        document.getElementById('photo-upload-trigger').style.display = 'none';
+    }
+    
+    // 촬영음 또는 셔터 터치 피드백 후 0.25초 후 카메라 정리 및 닫기
+    setTimeout(() => {
+        stopInAppCamera();
+        showCustomToast('사진 촬영 완료!', 'check_circle');
+    }, 250);
 }
 
 /**
@@ -915,7 +1068,10 @@ function previewReviewPhoto(input) {
  * 등록하려던 포토 제거
  */
 function removeReviewPhoto() {
-    document.getElementById('review-photo-file').value = '';
+    const albInput = document.getElementById('review-photo-file-album');
+    const camInput = document.getElementById('review-photo-file-camera');
+    if (albInput) albInput.value = '';
+    if (camInput) camInput.value = '';
     document.getElementById('photo-preview-container').style.display = 'none';
     document.getElementById('photo-upload-trigger').style.display = 'flex';
 }

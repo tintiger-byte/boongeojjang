@@ -785,3 +785,416 @@ body {
         opacity: 0;
     }
 }
+
+/* 사진 첨부 선택 바텀 시트 스타일 */
+.bottom-sheet-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.bottom-sheet-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(62, 39, 35, 0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.bottom-sheet-content {
+    position: relative;
+    width: 100%;
+    background-color: #FFFDF9;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    padding: 16px 24px 32px 24px;
+    box-shadow: 0 -8px 32px rgba(62, 39, 35, 0.15);
+    z-index: 3001;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+.bottom-sheet-overlay.active .bottom-sheet-backdrop {
+    opacity: 1;
+}
+
+.bottom-sheet-overlay.active .bottom-sheet-content {
+    transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+    width: 36px;
+    height: 5px;
+    background-color: #E5D9D0;
+    border-radius: 3px;
+    margin: 0 auto 16px auto;
+}
+
+.bottom-sheet-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #3E2723;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.bottom-sheet-subtitle {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #8D6E63;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.bottom-sheet-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.bottom-sheet-option-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background-color: #FFF;
+    border: 1.5px solid rgba(211, 142, 50, 0.15);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    text-align: left;
+}
+
+.bottom-sheet-option-btn:hover {
+    background-color: #FFFDF5;
+    border-color: var(--app-main-amber);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(211, 142, 50, 0.08);
+}
+
+.bottom-sheet-option-btn:active {
+    transform: translateY(0);
+    background-color: #FCF7EB;
+}
+
+.bottom-sheet-option-btn .option-icon {
+    font-size: 22px;
+    color: var(--app-main-amber);
+    background-color: #FFFDF0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(211, 142, 50, 0.1);
+}
+
+.bottom-sheet-option-btn .option-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3E2723;
+}
+
+.bottom-sheet-cancel-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #F5EFEA;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #8D6E63;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    outline: none;
+}
+
+.bottom-sheet-cancel-btn:hover {
+    background-color: #EADFD7;
+}
+
+.bottom-sheet-cancel-btn:active {
+    transform: scale(0.98);
+}
+
+/* 실시간 인앱 카메라 스타일 */
+.camera-view-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 4000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.camera-header {
+    position: absolute;
+    top: 36px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    z-index: 4010;
+}
+
+.camera-close-btn {
+    color: #FFF;
+    font-size: 24px;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.4);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.camera-close-btn:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.camera-close-btn:active {
+    transform: scale(0.92);
+}
+
+.camera-viewfinder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 220px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.35);
+    border-radius: 24px;
+    pointer-events: none;
+    z-index: 4005;
+}
+
+.camera-viewfinder::before,
+.camera-viewfinder::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: #FFF;
+    border-style: solid;
+}
+
+.camera-viewfinder::before {
+    top: -2px;
+    left: -2px;
+    border-width: 4px 0 0 4px;
+    border-top-left-radius: 8px;
+}
+
+.camera-viewfinder::after {
+    bottom: -2px;
+    right: -2px;
+    border-width: 0 4px 4px 0;
+    border-bottom-right-radius: 8px;
+}
+
+.camera-bottom-actions {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4010;
+}
+
+.shutter-btn-outer {
+    width: 76px;
+    height: 76px;
+    border: 4px solid #FFF;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    background-color: transparent;
+    outline: none;
+    padding: 0;
+}
+
+.shutter-btn-inner {
+    width: 60px;
+    height: 60px;
+    background-color: #FFF;
+    border-radius: 50%;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.shutter-btn-outer:hover .shutter-btn-inner {
+    background-color: #F0EFEA;
+}
+
+.shutter-btn-outer:active {
+    transform: scale(0.92);
+}
+
+.shutter-btn-outer:active .shutter-btn-inner {
+    transform: scale(0.9);
+}
+
+/* 셔터 플래시 효과 */
+.camera-flash-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #FFF;
+    z-index: 4020;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.flash-active {
+    animation: camera-flash 0.3s ease-out;
+}
+
+@keyframes camera-flash {
+    0% { opacity: 0; }
+    20% { opacity: 0.95; }
+    100% { opacity: 0; }
+}
+
+/* 3D 플립 카드 (Flip Card) 애니메이션 스타일 */
+.flip-card {
+    perspective: 1000px;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 8px;
+}
+
+.flip-card-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-style: preserve-3d;
+}
+
+.flip-card-front img {
+    width: 100% !important;
+    height: 100% !important;
+    margin-bottom: 0 !important;
+}
+
+/* Hover 및 Selected 일 때 3D Y축 회전 */
+.menu-card:hover .flip-card-inner,
+.menu-card.selected .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.flip-card-front {
+    background-color: transparent;
+    transform: rotateY(0deg);
+    z-index: 2;
+}
+
+.flip-card-back {
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 14px;
+    border: 3px solid var(--app-main-amber);
+    box-shadow: 0 8px 20px rgba(211, 142, 50, 0.15);
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+/* 각 도우별 테마 그라데이션 지정 */
+.menu-card[data-dough="plain"] .flip-card-back {
+    background: linear-gradient(135deg, #FFFDF8 0%, #FFF3E0 100%);
+    border-color: #E6B800;
+}
+.menu-card[data-dough="choco"] .flip-card-back {
+    background: linear-gradient(135deg, #FFFBF9 0%, #EFEBE9 100%);
+    border-color: #795548;
+}
+.menu-card[data-dough="matcha"] .flip-card-back {
+    background: linear-gradient(135deg, #F9FBF9 0%, #E8F5E9 100%);
+    border-color: #4CAF50;
+}
+.menu-card[data-dough="egg"] .flip-card-back {
+    background: linear-gradient(135deg, #FFFDF3 0%, #FFFDE7 100%);
+    border-color: #FFC107;
+}
+
+/* 백 페이스 텍스트 및 배치 스타일 */
+.flip-card-back .back-badge {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #FFF;
+    background-color: var(--app-main-amber);
+    padding: 2.5px 7px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    letter-spacing: -0.3px;
+    box-shadow: 0 2px 5px rgba(211, 142, 50, 0.2);
+}
+
+.menu-card[data-dough="choco"] .back-badge { background-color: #795548; }
+.menu-card[data-dough="matcha"] .back-badge { background-color: #4CAF50; }
+.menu-card[data-dough="egg"] .back-badge { background-color: #FFC107; }
+
+.flip-card-back .back-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #3E2723;
+    margin: 0 0 3px 0;
+}
+
+.flip-card-back .back-desc {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #6D4C41;
+    line-height: 1.35;
+    margin: 0;
+    word-break: keep-all;
+    max-width: 90%;
+    text-align: center;
+}

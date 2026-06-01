@@ -7,7 +7,148 @@
     <title>붕어짱 - 프리미엄 붕어빵 주문 앱</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        /* 3D 플립 카드 (Flip Card) 애니메이션 스타일 */
+        .flip-card {
+            perspective: 1000px;
+            width: 100%;
+            aspect-ratio: 1;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .flip-card-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+        }
+
+        /* Hover 및 Selected 일 때 3D Y축 회전 */
+        .menu-card:hover .flip-card-inner,
+        .menu-card.selected .flip-card-inner {
+            transform: rotateY(180deg) !important;
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100% !important;
+            height: 100% !important;
+            -webkit-backface-visibility: hidden !important;
+            backface-visibility: hidden !important;
+            border-radius: 50% !important;
+            overflow: hidden !important;
+            top: 0;
+            left: 0;
+        }
+
+        .flip-card-front {
+            background-color: transparent;
+            transform: rotateY(0deg);
+            z-index: 2;
+        }
+
+        .flip-card-front img {
+            width: 100% !important;
+            height: 100% !important;
+            margin-bottom: 0 !important;
+            object-fit: cover !important;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 14px !important;
+            box-shadow: 0 8px 20px rgba(211, 142, 50, 0.15) !important;
+            box-sizing: border-box !important;
+            z-index: 1;
+        }
+
+        /* 각 도우별 테마 그라데이션 지정 */
+        .menu-card[data-dough="plain"] .flip-card-back {
+            background: linear-gradient(135deg, #FFFDF8 0%, #FFF3E0 100%) !important;
+            border: 3px solid #E6B800 !important;
+        }
+        .menu-card[data-dough="choco"] .flip-card-back {
+            background: linear-gradient(135deg, #FFFBF9 0%, #EFEBE9 100%) !important;
+            border: 3px solid #795548 !important;
+        }
+        .menu-card[data-dough="matcha"] .flip-card-back {
+            background: linear-gradient(135deg, #F9FBF9 0%, #E8F5E9 100%) !important;
+            border: 3px solid #4CAF50 !important;
+        }
+        .menu-card[data-dough="egg"] .flip-card-back {
+            background: linear-gradient(135deg, #FFFDF3 0%, #FFFDE7 100%) !important;
+            border: 3px solid #FFC107 !important;
+        }
+
+        /* 각 속재료별 테마 그라데이션 지정 */
+        .menu-card[data-ingredient="choco"] .flip-card-back {
+            background: linear-gradient(135deg, #FFFBF9 0%, #EFEBE9 100%) !important;
+            border: 3px solid #795548 !important;
+        }
+        .menu-card[data-ingredient="custard"] .flip-card-back {
+            background: linear-gradient(135deg, #FFFDF3 0%, #FFFDE7 100%) !important;
+            border: 3px solid #FFC107 !important;
+        }
+        .menu-card[data-ingredient="redbean"] .flip-card-back {
+            background: linear-gradient(135deg, #FFF8F7 0%, #F5EEEE 100%) !important;
+            border: 3px solid #B71C1C !important;
+        }
+        .menu-card[data-ingredient="honey"] .flip-card-back {
+            background: linear-gradient(135deg, #FFFDF0 0%, #FFF8E1 100%) !important;
+            border: 3px solid #FF8F00 !important;
+        }
+
+        /* 백 페이스 텍스트 및 배치 스타일 */
+        .flip-card-back .back-badge {
+            font-size: 10.5px !important;
+            font-weight: 800 !important;
+            color: #FFF !important;
+            background-color: var(--app-main-amber) !important;
+            padding: 2.5px 7px !important;
+            border-radius: 10px !important;
+            margin-bottom: 5px !important;
+            letter-spacing: -0.3px !important;
+            box-shadow: 0 2px 5px rgba(211, 142, 50, 0.2) !important;
+        }
+
+        .menu-card[data-dough="choco"] .back-badge { background-color: #795548 !important; }
+        .menu-card[data-dough="matcha"] .back-badge { background-color: #4CAF50 !important; }
+        .menu-card[data-dough="egg"] .back-badge { background-color: #FFC107 !important; }
+
+        .menu-card[data-ingredient="choco"] .back-badge { background-color: #795548 !important; }
+        .menu-card[data-ingredient="custard"] .back-badge { background-color: #FFC107 !important; }
+        .menu-card[data-ingredient="redbean"] .back-badge { background-color: #B71C1C !important; }
+        .menu-card[data-ingredient="honey"] .back-badge { background-color: #FF8F00 !important; }
+
+        .flip-card-back .back-title {
+            font-size: 13.5px !important;
+            font-weight: 800 !important;
+            color: #3E2723 !important;
+            margin: 0 0 3px 0 !important;
+        }
+
+        .flip-card-back .back-desc {
+            font-size: 9.5px !important;
+            font-weight: 600 !important;
+            color: #6D4C41 !important;
+            line-height: 1.35 !important;
+            margin: 0 !important;
+            word-break: keep-all !important;
+            max-width: 90% !important;
+            text-align: center !important;
+        }
+    </style>
     <!-- 토스페이먼츠 V2 표준 결제창 SDK 로드 및 모바일 레이아웃 강제 위장 -->
     <script>
         // 1. User-Agent를 iPhone으로 임시 위장 (SDK 로드 시 모바일용 결제창 생성 유도)
@@ -236,33 +377,69 @@
                 <br><br>
 
                 <div class="grid-2x2">
-                    <div class="menu-card" onclick="selectDough(this, 'plain')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="plain_dough.png" alt="플레인">
+                    <div class="menu-card" onclick="selectDough(this, 'plain')" data-dough="plain">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="plain_dough.png" alt="플레인">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">오리지널</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">겉은 바삭하고 속은 쫄깃한 고소한 기본 도우</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>플레인</h4>
                         <p>오리지널 붕어빵</p>
                     </div>
-                    <div class="menu-card" onclick="selectDough(this, 'choco')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="choco_dough.png" alt="초콜릿">
+                    <div class="menu-card" onclick="selectDough(this, 'choco')" data-dough="choco">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="choco_dough.png" alt="초콜릿">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">달콤초코</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">진하고 풍부한 벨기에산 코코아의 명품 달콤함</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>초콜릿</h4>
                         <p>진하고 달콤한 초코</p>
                     </div>
-                    <div class="menu-card" onclick="selectDough(this, 'matcha')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="matcha_dough.png" alt="말차">
+                    <div class="menu-card" onclick="selectDough(this, 'matcha')" data-dough="matcha">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="matcha_dough.png" alt="말차">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">제주말차</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">쌉싸름하고 향긋한 최고급 제주 유기농 녹차의 풍미</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>말차</h4>
                         <p>쌉싸름한 녹차향</p>
                     </div>
-                    <div class="menu-card" onclick="selectDough(this, 'egg')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="egg_dough.png" alt="계란">
+                    <div class="menu-card" onclick="selectDough(this, 'egg')" data-dough="egg">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="egg_dough.png" alt="계란">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">카스텔라</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">고소한 계란의 향과 달달함이 어우러진 촉촉한 반죽</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>에그</h4>
@@ -373,33 +550,69 @@
                 </p>
 
                 <div class="grid-2x2">
-                    <div class="menu-card" onclick="selectIngredient(this, 'choco')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="choco_ingredient.png" alt="초콜릿">
+                    <div class="menu-card" onclick="selectIngredient(this, 'choco')" data-ingredient="choco">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="choco_ingredient.png" alt="초콜릿">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">리얼초코</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">진하고 달콤한 벨기에산 프리미엄 밀크 초콜릿</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>₩2,500</h4>
                         <p>진하고 달콤한 초코</p>
                     </div>
-                    <div class="menu-card" onclick="selectIngredient(this, 'custard')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="custard_ingredient.png" alt="슈크림">
+                    <div class="menu-card" onclick="selectIngredient(this, 'custard')" data-ingredient="custard">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="custard_ingredient.png" alt="슈크림">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">황금슈크림</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">입안 가득 부드럽고 달콤하게 퍼지는 홈메이드 커스터드</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>₩2,500</h4>
                         <p>부드러운 시그니처 슈크림</p>
                     </div>
-                    <div class="menu-card" onclick="selectIngredient(this, 'redbean')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="redbean_ingredient.png" alt="단팥">
+                    <div class="menu-card" onclick="selectIngredient(this, 'redbean')" data-ingredient="redbean">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="redbean_ingredient.png" alt="단팥">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">명품단팥</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">100% 국산 팥으로 매일 끓여 달지 않고 고소한 전통의 맛</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>₩2,500</h4>
                         <p>달지 않고 고소한 전통 단팥</p>
                     </div>
-                    <div class="menu-card" onclick="selectIngredient(this, 'honey')">
-                        <div class="fish-circle-wrap">
-                            <img class="fish-circle-img" src="honey_ingredient.png" alt="꿀과 견과">
+                    <div class="menu-card" onclick="selectIngredient(this, 'honey')" data-ingredient="honey">
+                        <div class="fish-circle-wrap flip-card">
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <img class="fish-circle-img" src="honey_ingredient.png" alt="꿀과 견과">
+                                </div>
+                                <div class="flip-card-back">
+                                    <span class="back-badge">꿀견과</span>
+                                    <h5 class="back-title">선택 완료!</h5>
+                                    <p class="back-desc">달콤한 자연 꿀과 고소하게 씹히는 풍부한 호두/땅콩</p>
+                                </div>
+                            </div>
                             <span class="material-icons-round select-check-badge">check_circle</span>
                         </div>
                         <h4>₩2,500</h4>
@@ -481,16 +694,16 @@
         </div>
 
         <div id="scr-cart" class="screen">
-            <div class="app-header" style="padding: 18px 24px; border-bottom: none; position: relative;">
+            <div class="app-header" style="padding: 18px 16px; border-bottom: none; position: relative;">
                 <span class="material-icons-round click-icon"
-                    onclick="window.history.back() || navigateTo('scr-detail')"
+                    onclick="navigateTo('scr-detail')"
                     style="font-size: 24px; font-weight: 900; color: #000;">home</span>
                 <h2
                     style="font-size: 32px; font-weight: 800; color: #000; letter-spacing: -0.5px; margin: 0; position: absolute; left: 50%; transform: translateX(-50%);">
                     장바구니</h2>
-                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')" style="color: #4A2B20; font-size: 24px; position: absolute; right: 24px; z-index: 5;">settings</span>
+                <span class="material-icons-round click-icon" onclick="navigateTo('scr-settings')" style="color: #4A2B20; font-size: 24px; position: absolute; right: 16px; z-index: 5;">settings</span>
             </div>
-            <div class="screen-content" style="padding: 0 24px 24px 24px;">
+            <div class="screen-content" style="padding: 0 16px 24px 16px;">
                 <div class="cart-notice"
                     style="font-size: 14px; font-weight: 700; color: #D38E32; text-align: center; margin-bottom: 20px; background-color: #FFFDF5; border: 1px dashed rgba(211,142,50,0.3); padding: 10px; border-radius: 16px;">
                     주문시 수량을 확인해 주세요.
@@ -663,7 +876,9 @@
                             <span class="material-icons-round" style="font-size: 24px;">add_a_photo</span>
                             <span style="font-size: 10px; font-weight: 700; margin-top: 4px;">사진 첨부</span>
                         </div>
-                        <input type="file" id="review-photo-file" accept="image/*" style="display: none;"
+                        <input type="file" id="review-photo-file-album" accept="image/*" style="display: none;"
+                            onchange="previewReviewPhoto(this)">
+                        <input type="file" id="review-photo-file-camera" accept="image/*" capture="environment" style="display: none;"
                             onchange="previewReviewPhoto(this)">
                         <div id="photo-preview-container"
                             style="display: none; position: relative; width: 80px; height: 80px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
@@ -999,10 +1214,48 @@
             </div>
         </div>
 
+        <!-- 사진 등록 방식 선택 바텀시트 -->
+        <div id="photo-choice-bottom-sheet" class="bottom-sheet-overlay" style="display: none;">
+            <div class="bottom-sheet-backdrop" onclick="closePhotoChoice()"></div>
+            <div class="bottom-sheet-content">
+                <div class="bottom-sheet-handle"></div>
+                <h3 class="bottom-sheet-title">사진 첨부</h3>
+                <p class="bottom-sheet-subtitle">사진을 등록할 방식을 선택해주세요.</p>
+                <div class="bottom-sheet-options">
+                    <button class="bottom-sheet-option-btn" onclick="selectPhotoFrom('camera')">
+                        <span class="material-icons-round option-icon">photo_camera</span>
+                        <span class="option-text">카메라 켜기</span>
+                    </button>
+                    <button class="bottom-sheet-option-btn" onclick="selectPhotoFrom('album')">
+                        <span class="material-icons-round option-icon">photo_library</span>
+                        <span class="option-text">앨범에서 선택하기</span>
+                    </button>
+                </div>
+                <button class="bottom-sheet-cancel-btn" onclick="closePhotoChoice()">취소</button>
+            </div>
+        <!-- 실시간 인앱 카메라 뷰 영역 -->
+        <div id="in-app-camera-container" class="camera-view-container" style="display: none;">
+            <div class="camera-header">
+                <div class="camera-close-btn" onclick="stopInAppCamera()">
+                    <span class="material-icons-round">arrow_back</span>
+                </div>
+                <h3 style="color: #FFF; font-size: 16px; font-weight: 700; margin: 0;">카메라 촬영</h3>
+                <span style="width: 44px;"></span>
+            </div>
+            <video id="camera-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; background: #000;"></video>
+            <div class="camera-viewfinder"></div>
+            <div id="camera-flash" class="camera-flash-overlay"></div>
+            <div class="camera-bottom-actions">
+                <button class="shutter-btn-outer" onclick="capturePhotoFromVideo()">
+                    <div class="shutter-btn-inner"></div>
+                </button>
+            </div>
+        </div>
+
         <div class="home-indicator"></div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=10"></script>
 </body>
 
 </html>
